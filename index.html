@@ -4137,7 +4137,7 @@
     });
 
     function loadImagesForProjection(projectionId) {
-      fetch(`./plots/${projectionId}_map.png`)
+      fetch(`./maps/${projectionId}_map.jpg`)
         .then(response => response.blob())
         .then(blob => {
           const url = URL.createObjectURL(blob);
