@@ -1,0 +1,4545 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Global and Local Distortions in Map Projections: An Interactive Visualization System</title>
+  <meta name="description"
+    content="An interactive tool to visualize and compare global vs local distortions in map projections. Explore how different cartographic projections deform shapes and areas.">
+  <meta name="keywords"
+    content="map projections, cartographic distortions, interactive visualization, global vs local distortions, equal-area projection, map projection tool, geographic visualization">
+  <style>
+    body,
+    html {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: sans-serif;
+    }
+
+    .top-bar {
+      display: flex;
+      height: 40px;
+      border-bottom: 1px solid #ccc;
+      padding: 5px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .top-left,
+    .top-right {
+      width: 50%;
+      font-weight: bold;
+    }
+
+    .top-left {
+      text-align: center;
+    }
+
+    .top-right {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+    }
+
+    .left-graph {
+      width: 50%;
+      border-right: 1px solid #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .graph-placeholder {
+      width: 90%;
+      height: 90%;
+      border: 1px dashed #aaa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #666;
+    }
+
+    .right-images {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      height: 95%;
+    }
+
+    .image-box {
+      width: 100%;
+      height: 42%;
+      margin-top: 20px;
+    }
+
+    .image-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .image-container img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .overlay-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 8px 12px;
+      font-weight: bold;
+      z-index: 2;
+      text-align: center;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .caption {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .tooltip-box {
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 13px;
+      position: relative;
+      max-width: 250px;
+      pointer-events: none;
+      box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .tooltip-arrow {
+      position: absolute;
+      bottom: -6px;
+      /* Adjust depending on arrow size */
+      left: 50%;
+      margin-left: -6px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 6px solid rgba(0, 0, 0, 0.8);
+    }
+
+    .tooltip-content {
+      pointer-events: none;
+    }
+  </style>
+
+  <script src="./tex-mml-chtml.js"></script>
+
+</head>
+
+<body>
+
+  <div class="top-bar">
+    <div class="top-left">Global Areal and Angular Distortions</div>
+    <div class="top-right">
+      <span>Plots of Local Distortions for</span>
+      <select id="level-1" style="width: 180px; margin-left: 8px;"></select>
+      <select id="level-2" style="width: 180px; margin-left: 8px;"></select>
+      <select id="level-3" style="width: 180px; margin-left: 8px;"></select>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="left-graph">
+      <div class="graph-placeholder" id="main-graph"></div>
+    </div>
+
+    <div class="right-images">
+      <div class="caption">Global Overall Distortion <span id="all-value" style="font-size: 0.9em">\( E =
+          \sqrt{E_{\angle}^2+E_A^2} =
+          {} \)</span></div>
+
+      <div class="image-box">
+        <div class="image-container">
+          <img id="img-area-base" src="" style="z-index: 0;">
+          <img id="img-area-overlay" src="" style="z-index: 1; opacity: 1;">
+          <div id="area-text" class="overlay-text">
+            Local areal distortion factor (unitless; 1 indicates no areal distortion)
+          </div>
+        </div>
+        <div class="caption">Global Areal Distortion <i>E<sub>A</sub></i> = <span id="area-value"></span></div>
+      </div>
+
+      <div class="image-box" style="margin-top: 40px;">
+        <div class="image-container">
+          <img id="img-angu-base" src="" style="z-index: 0;">
+          <img id="img-angu-overlay" src="" style="z-index: 1; opacity: 1;">
+          <div id="angu-text" class="overlay-text">
+            Local Maximum Angular Deformation (degrees)
+          </div>
+        </div>
+        <div class="caption">Global Angular Distortion <i>E<sub>∠</sub></i> = <span id="angu-value"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="custom-tooltip" style="position: absolute; display: none;">
+    <div class="tooltip-box">
+      <div class="tooltip-arrow"></div>
+      <div class="tooltip-content"></div>
+    </div>
+  </div>
+
+  <script src="./plotly-basic.min.js"></script>
+  <script>
+
+    const projectionNameMap = {
+      "baker_int": "Baker Dinomic",
+      "boggs_int": "Boggs Eumorphic",
+      "goode_int": "Goode Homolosine",
+      "mcb_p3_int": "McBryde P3",
+      "mcb_q3_int": "McBryde Q3",
+      "mcb_s2_int": "McBryde S2",
+      "mcb_s3_int": "McBryde S3",
+      "mcbt_fpp_int": "McBryde–Thomas Flat-Polar Parabolic",
+      "mcbt_fpq_int": "McBryde–Thomas Flat-Polar Quartic",
+      "mcbt_fps_int": "McBryde–Thomas Flat-Polar Sinusoidal",
+      "moll_int": "Mollweide",
+      "moll_brom_int": "Bromley (Mollweide with Bromley scaling)",
+      "qua_aut_int": "Quartic-authalic",
+      "siemon4_int": "Siemon IV",
+      "sinus_int": "Sinusoidal",
+      "berg_star": "Berghaus Star",
+      "hexaf_eqa": "Hexafoliate Equal-Area",
+      "hexaf_eqd": "Hexafoliate Equidistant",
+      "maurer231": "Maurer SNo. 231",
+      "william_ols": "William–Olsson",
+      "aeqd_2H": "Azimuthal Equidistant",
+      "airy_2H": "Airy",
+      "apian2_2H": "Apian II",
+      "bacon_2H": "Bacon",
+      "breus_g_2H": "Breusing Geometric",
+      "breus_h_2H": "Breusing Harmonic",
+      "fournier1_2H": "Fournier I",
+      "gins1_2H": "Ginzburg I",
+      "gins2_2H": "Ginzburg II",
+      "gott_mug_2H": "Gott–Mugnolo Azimuthal",
+      "laea_2H": "Lambert Azimuthal Equal-area",
+      "nicol_2H": "Nicolosi Globular",
+      "stereo_2H": "Stereographic",
+      "braun_p": "Braun Perspective",
+      "cea": "Cylindrical Equal-Area",
+      "cea_0": "Cylindrical Equal-Area [φₜₛ = 0°]",
+      "cea_36": "Cylindrical Equal-Area [φₜₛ = 36°]",
+      "cea_54": "Cylindrical Equal-Area [φₜₛ = 54°]",
+
+      "comill": "Compact Miller",
+      "cyl_s": "Cylindrical Stereographic",
+      "cyl_s_0": "Cylindrical Stereographic [φₜₛ = 0°]",
+      "cyl_s_54": "Cylindrical Stereographic [φₜₛ = 54°]",
+      "cyl_s_72": "Cylindrical Stereographic [φₜₛ = 72°]",
+
+      "eqc": "Equirectangular or Equidistant Cylindrical",
+      "eqc_0": "Equirectangular [φₜₛ = 0°]",
+      "eqc_36": "Equirectangular [φₜₛ = 36°]",
+      "eqc_54": "Equirectangular [φₜₛ = 54°]",
+
+      "kh_sh": "Kharchenko-Shabanova",
+      "miller": "Miller Cylindrical",
+      "miller1": "Miller Cylindrical I",
+      "miller2": "Miller Cylindrical II",
+      "patterson": "Patterson Cylindrical",
+      "pavlov": "Pavlov",
+      "tob": "Tobler Cylindrical",
+      "tob1": "Tobler Cylindrical I",
+      "tob2": "Tobler Cylindrical II",
+      "urm": "Urmayev Cylindrical",
+      "urm2": "Urmayev Cylindrical II",
+      "urm3": "Urmayev Cylindrical III",
+      "apian1": "Apian I",
+      "apian2": "Apian II",
+      "baar_sine": "Baar Sine Series",
+      "bacon": "Bacon",
+      "baker": "Baker Dinomic",
+      "baranyi": "Baranyi",
+      "baranyi1": "Baranyi I",
+      "baranyi2": "Baranyi II",
+      "baranyi3": "Baranyi III",
+      "baranyi4": "Baranyi IV",
+      "baranyi5": "Baranyi V",
+      "baranyi6": "Baranyi VI",
+      "baranyi7": "Baranyi VII",
+
+      "boggs": "Boggs Eumorphic",
+      "cabot": "Cabot",
+      "cabot_1.27": "Cabot [aspect ratio = 1.27]",
+      "cabot_1.33": "Cabot [aspect ratio = 1.33]",
+      "cabot_1.8": "Cabot [aspect ratio = 1.8]",
+      "canters_pscy": "Canters Pseudocylindric",
+      "crast": "Craster Parabolic",
+      "deakin": "Deakin Minimum-Error",
+      "denoy": "Denoyer Semi-Elliptical",
+      "eck": "Eckert",
+      "eck1": "Eckert I",
+      "eck2": "Eckert II",
+      "eck3": "Eckert III",
+      "eck4": "Eckert IV",
+      "eck5": "Eckert V",
+      "eck6": "Eckert VI",
+
+      "eqearth": "Equal Earth",
+      "erdi": "Érdi-Krausz",
+      "fahey": "Fahey",
+      "fouc_sinu": "Foucaut Sinusoidal",
+      "fouc_sinu_0": "Foucaut Sinusoidal [α = 0]",
+      "fouc_sinu_0.25": "Foucaut Sinusoidal [α = 0.25]",
+      "fouc_sinu_0.5": "Foucaut Sinusoidal [α = 0.5]",
+      "fouc_sinu_0.75": "Foucaut Sinusoidal [α = 0.75]",
+      "fouc_sinu_1": "Foucaut Sinusoidal [α = 1]",
+
+      "fouc_sinu_resc": "Foucaut Sinusoidal [Rescaled]",
+      "fouc_sinu_resc_0": "Foucaut Sinusoidal [α = 0, Rescaled]",
+      "fouc_sinu_resc_0.25": "Foucaut Sinusoidal [α = 0.25, Rescaled]",
+      "fouc_sinu_resc_0.5": "Foucaut Sinusoidal [α = 0.5, Rescaled]",
+      "fouc_sinu_resc_0.75": "Foucaut Sinusoidal [α = 0.75, Rescaled]",
+      "fouc_sinu_resc_1": "Foucaut Sinusoidal [α = 1, Rescaled]",
+
+      "fouc_stereo": "Foucaut Stereographic",
+      "fournier2": "Fournier II",
+      "gall_bomf": "Gall-Bomford Pseudocylindrical",
+      "gins": "Ginzburg",
+      "gins4": "Ginzburg IV",
+      "gins5": "Ginzburg V",
+      "gins6": "Ginzburg VI",
+      "gins8": "Ginzburg VIII",
+      "gins9": "Ginzburg IX",
+
+      "goode": "Goode Homolosine",
+      "gyorf": "Györffy",
+      "gyorf_a": "Györffy A",
+      "gyorf_b": "Györffy B",
+      "gyorf_d": "Györffy D",
+      "gyorf_e": "Györffy E",
+      "gyorf_f": "Györffy F",
+      "hatano": "Hatano",
+      "holzel": "Hölzel",
+      "kav": "Kavraisky",
+      "kav7": "Kavraisky VII",
+      "loxim": "Loximuthal",
+      "loxim_0": "Loximuthal [φ₁ = 0°]",
+      "loxim_36": "Loximuthal [φ₁ = 36°]",
+      "loxim_54": "Loximuthal [φ₁ = 54°]",
+      "loxim_72": "Loximuthal [φ₁ = 72°]",
+
+      "mayr": "Mayr",
+      "mcb_p3": "McBryde P3",
+      "mcb_q3": "McBryde Q3",
+      "mcb_s2": "McBryde S2",
+      "mcb_s3": "McBryde S3",
+      "mcbt1": "McBryde–Thomas I",
+      "mcbt2": "McBryde–Thomas II",
+      "mcbt_fpp": "McBryde–Thomas Flat-Polar Parabolic",
+      "mcbt_fpq": "McBryde–Thomas Flat-Polar Quartic",
+      "mcbt_fps": "McBryde–Thomas Flat-Polar Sinusoidal",
+      "moll": "Mollweide",
+      "moll_brom": "Bromley (Mollweide with Bromley scaling)",
+      "natearth": "Natural Earth",
+      "natearth1": "Natural Earth I",
+      "natearth2": "Natural Earth II",
+
+      "nell": "Nell",
+      "nell_h": "Nell–Hammer",
+      "ortel": "Ortelius Oval",
+      "putp": "Putniņš",
+      "putp1": "Putniņš P₁",
+      "putp2": "Putniņš P₂",
+      "putp3": "Putniņš P₃",
+      "putp3p": "Putniņš P\'₃",
+      "putp4p": "Putniņš P\'₄",
+      "putp5": "Putniņš P₅",
+      "putp5p": "Putniņš P\'₅",
+      "putp6": "Putniņš P₆",
+      "putp6p": "Putniņš P\'₆",
+
+      "baar_sine_0.4_0": "Baar Sine Series [a = 0.4, φₜₛ = 0°]",
+      "baar_sine_0.4_18": "Baar Sine Series [a = 0.4, φₜₛ = 18°]",
+      "baar_sine_0.6_0": "Baar Sine Series [a = 0.6, φₜₛ = 0°]",
+      "baar_sine_0.6_18": "Baar Sine Series [a = 0.6, φₜₛ = 18°]",
+      "baar_sine_0.8_0": "Baar Sine Series [a = 0.8, φₜₛ = 0°]",
+      "baar_sine_0.8_18": "Baar Sine Series [a = 0.8, φₜₛ = 18°]",
+      "baar_sine_1.0_0": "Baar Sine Series [a = 1.0, φₜₛ = 0°]",
+      "baar_sine_1.0_18": "Baar Sine Series [a = 1.0, φₜₛ = 18°]",
+
+      "sinucyli_0.25_0": "Sinucyli [α = 0.25, φₜₛ = 0°]",
+      "sinucyli_0.25_36": "Sinucyli [α = 0.25, φₜₛ = 36°]",
+      "sinucyli_0.25_54": "Sinucyli [α = 0.25, φₜₛ = 54°]",
+      "sinucyli_0.25_72": "Sinucyli [α = 0.25, φₜₛ = 72°]",
+      "sinucyli_0.5_0": "Sinucyli [α = 0.5, φₜₛ = 0°]",
+      "sinucyli_0.5_36": "Sinucyli [α = 0.5, φₜₛ = 36°]",
+      "sinucyli_0.5_54": "Sinucyli [α = 0.5, φₜₛ = 54°]",
+      "sinucyli_0.5_72": "Sinucyli [α = 0.5, φₜₛ = 72°]",
+      "sinucyli_0.75_0": "Sinucyli [α = 0.75, φₜₛ = 0°]",
+      "sinucyli_0.75_36": "Sinucyli [α = 0.75, φₜₛ = 36°]",
+      "sinucyli_0.75_54": "Sinucyli [α = 0.75, φₜₛ = 54°]",
+      "sinucyli_0.75_72": "Sinucyli [α = 0.75, φₜₛ = 72°]",
+      "sinucyli_homo_0.25_0": "Sinucyli [α = 0.25, φₜₛ = 0°, RH]",
+      "sinucyli_homo_0.25_36": "Sinucyli [α = 0.25, φₜₛ = 36°, RH]",
+      "sinucyli_homo_0.25_54": "Sinucyli [α = 0.25, φₜₛ = 54°, RH]",
+      "sinucyli_homo_0.25_72": "Sinucyli [α = 0.25, φₜₛ = 72°, RH]",
+      "sinucyli_homo_0.5_0": "Sinucyli [α = 0.5, φₜₛ = 0°, RH]",
+      "sinucyli_homo_0.5_36": "Sinucyli [α = 0.5, φₜₛ = 36°, RH]",
+      "sinucyli_homo_0.5_54": "Sinucyli [α = 0.5, φₜₛ = 54°, RH]",
+      "sinucyli_homo_0.5_72": "Sinucyli [α = 0.5, φₜₛ = 72°, RH]",
+      "sinucyli_homo_0.75_0": "Sinucyli [α = 0.75, φₜₛ = 0°, RH]",
+      "sinucyli_homo_0.75_36": "Sinucyli [α = 0.75, φₜₛ = 36°, RH]",
+      "sinucyli_homo_0.75_54": "Sinucyli [α = 0.75, φₜₛ = 54°, RH]",
+      "sinucyli_homo_0.75_72": "Sinucyli [α = 0.75, φₜₛ = 72°, RH]",
+
+      "urm_sinu_0": "Urmayev Sinusoidal [b = 0]",
+      "urm_sinu_0.25": "Urmayev Sinusoidal [b = 0.25]",
+      "urm_sinu_0.5": "Urmayev Sinusoidal [b = 0.5]",
+      "urm_sinu_0.75": "Urmayev Sinusoidal [b = 0.75]",
+      "urm_sinu_1": "Urmayev Sinusoidal [b = 1]",
+
+      "qua_aut": "Quartic-authalic",
+      "robinson": "Robinson",
+      "siemon4": "Siemon IV",
+      "sinucyli": "Sinucyli",
+      "sinucyli_homo": "Sinucyli [Reverse Homotopy]",
+      "sinus": "Sinusoidal",
+      "snyd_me": "Snyder Minimum-Error",
+      "snyd_me_flat": "Snyder Minimum-Error Flat Pole",
+      "snyd_me_point": "Snyder Minimum-Error Pointed Pole",
+
+      "times": "Times Atlas",
+      "tob_g1": "Tobler G1",
+      "tob_g1_0": "Tobler G1 [α = 0]",
+      "tob_g1_0.25": "Tobler G1 [α = 0.25]",
+      "tob_g1_0.5": "Tobler G1 [α = 0.5]",
+      "tob_g1_0.75": "Tobler G1 [α = 0.75]",
+      "tob_g1_1": "Tobler G1 [α = 1]",
+
+      "urm_sinu": "Urmayev Sinusoidal",
+      "wag1": "Wagner I",
+      "wag2": "Wagner II",
+      "wag3": "Wagner III",
+      "wag3_0": "Wagner III [φₜₛ = 0°]",
+      "wag3_36": "Wagner III [φₜₛ = 36°]",
+      "wag3_54": "Wagner III [φₜₛ = 54°]",
+      "wag3_72": "Wagner III [φₜₛ = 72°]",
+
+      "wag4": "Wagner IV",
+      "wag5": "Wagner V",
+      "wag6": "Wagner VI",
+      "wink1": "Winkel I",
+      "wink1_0": "Winkle I [φₜₛ = 0°]",
+      "wink1_36": "Winkle I [φₜₛ = 36°]",
+      "wink1_54": "Winkle I [φₜₛ = 54°]",
+      "wink1_72": "Winkle I [φₜₛ = 72°]",
+      "wink1_90": "Winkle I [φₜₛ = 90°]",
+
+      "canters01": "Canters Pseudocylindric W01",
+      "canters02": "Canters Pseudocylindric W02",
+      "canters06": "Canters Pseudocylindric W06",
+      "canters07": "Canters Polyconic W07",
+      "canters12": "Canters Polyconic W12",
+      "canters13": "Canters Polyconic W13",
+      "canters14": "Canters Polyconic W14",
+      "canters15": "Canters Pseudocylindric W15",
+      "canters16": "Canters Pseudocylindric W16",
+      "canters17": "Canters Pseudocylindric W17",
+      "canters19": "Canters Pseudocylindric W19",
+      "canters20": "Canters Polyconic W20",
+      "canters21": "Canters Polyconic W21",
+      "canters33": "Canters Pseudocylindric W33",
+      "canters34": "Canters Pseudocylindric W34",
+
+      "wink2": "Winkel II",
+      "wink_snyd": "Winkel–Snyder",
+
+      "aeqd": "Azimuthal Equidistant",
+      "gott_mug": "Gott–Mugnolo Azimuthal",
+      "laea": "Lambert Azimuthal Equal-area",
+
+      "bonne": "Bonne",
+      "bonne_0": "Bonne [φ₁ = 0°]",
+      "bonne_18": "Bonne [φ₁ = 18°]",
+      "bonne_36": "Bonne [φ₁ = 36°]",
+      "bonne_54": "Bonne [φ₁ = 54°]",
+      "bonne_90": "Bonne [φ₁ = 90°]",
+
+      "bottom": "Bottomley",
+      "bottom_0": "Bottomley [φ₁ = 0°]",
+      "bottom_36": "Bottomley [φ₁ = 36°]",
+      "bottom_54": "Bottomley [φ₁ = 54°]",
+      "bottom_90": "Bottomley [φ₁ = 90°]",
+
+      "aitoff": "Aitoff",
+      "americ": "American Polyconic",
+      "wink3": "Winkel Tripel",
+      "wink3_barth": "Bartholomew (Winkel Tripel with Bartholomew scaling)",
+      "briesem": "Briesemeister (Hammer with Briesemeister scaling)",
+      "canters_poco": "Canters Polyconic",
+      "eck_greif": "Eckert–Greifendorff",
+      "fournier1": "Fournier I Globular",
+      "franc": "Frančula",
+      "franc5": "Frančula V",
+      "franc14": "Frančula XIV",
+
+      "hammer": "Hammer",
+      "hill_eucy": "Hill Eucyclic",
+
+      "hill_eucy_0": "Hill Eucyclic [K = 0]",
+      "hill_eucy_0.25": "Hill Eucyclic [K = 0.25]",
+      "hill_eucy_0.75": "Hill Eucyclic [K = 0.75]",
+      "hill_eucy_2": "Hill Eucyclic [K = 2]",
+      "hill_eucy_6": "Hill Eucyclic [K = 6]",
+
+      "maurer160": "Maurer SNo. 160 Apparent Globular",
+      "wink3_oxford": "Oxford Atlas - Polyconic (Winkel Tripel with Oxford Atlas scaling)",
+      "stab_w": "Stabius-Werner",
+      "stab_w1": "Stabius-Werner I",
+      "stab_w3": "Stabius-Werner III",
+
+      "strebe_eqa": "Strebe Equal-area",
+      "v_grint": "Van der Grinten",
+      "v_grint4": "Van der Grinten IV",
+
+      "adams_w1": "Adams World in a Square I",
+      "august": "August Epicycloidal",
+      "gott_eqa": "Gott Equal-area Elliptical",
+      "gott_eqa_scale": "Gott–Mugnolo Elliptical",
+      "lagrng": "Lambert–Lagrange",
+      "lagrng_1.2": "Lambert–Lagrange [n = 1.2]",
+      "lagrng_1.5": "Lambert–Lagrange [n = 1.5]",
+      "lagrng_2": "Lambert–Lagrange [n = 2]",
+      "maurer187": "Maurer SNo. 187 All-Globular",
+      "philb_sinu_moll": "Philbrick Sinu–Mollweide",
+      "raisz": "Raisz",
+      "raisz_arm_0": "Raisz Armadillo",
+      "raisz_half_e_0": "Raisz Half Ellipsoidal",
+
+    };
+
+    function plotlines(x, y, pointNames, marker, markerfacecolor, color, markeredgewidth, legendname, legendnameshort) {
+
+      let showlegend = legendname !== "";
+      let mode = "";
+      let symbol = "";
+      let line = { width: 0.5, color: color };
+      let markerConfig = {
+        color: color,
+        size: (marker === '-' || marker === '--') ? 5 : 10,
+        line: { width: markeredgewidth, color: color }
+      };
+
+      if (marker === "--") {
+        mode = "lines";
+        line.dash = "dash";
+      } else if (marker === "-") {
+        mode = "lines";
+      } else {
+        if (marker[0] === 's') symbol = "square";
+        else if (marker[0] === '+') symbol = "star-diamond";
+        else if (marker[0] === 'o') symbol = "circle";
+        else if (marker[0] === 'd') symbol = "diamond";
+        else if (marker[0] === '*') symbol = "star";
+        else if (marker[0] === 'x') symbol = "x";
+        else if (marker[0] === '^') symbol = "triangle-up";
+        else if (marker[0] === 'c') symbol = "cross";
+
+        markerConfig.symbol = symbol;
+
+        if (marker.length === 1) {
+          mode = "markers";
+        } else {
+          mode = "markers+lines";
+          line.width = 1;
+        }
+      }
+
+      const processedText = pointNames.map(name => projectionNameMap[name] || name);
+
+      const customData = x.map((xVal, i) => {
+        const yVal = y[i];
+        const eVal = Math.sqrt(xVal ** 2 + yVal ** 2);
+        return [eVal, pointNames[i]];
+      });
+
+      return {
+        x: x,
+        y: y,
+        mode: mode,
+        name: legendname,
+        showlegend: showlegend,
+        marker: markerConfig,
+        selected: {
+          marker: {
+            opacity: 1
+          }
+        },
+        unselected: {
+          marker: {
+            opacity: 1
+          }
+        },
+        line: line,
+        type: 'scatter',
+        text: processedText,
+        hovertemplate: `<b>%{text}</b>&nbsp;<span style="opacity:0.8">${legendnameshort}</span><br><i>E<sub>A</sub></i> =%{y:.5f}<br><i>E<sub>∠</sub></i>=%{x:.5f}<br><i>E&nbsp;&nbsp;&nbsp;=%{customdata[0]:.5f}<br><extra></extra>`,
+        legendnameshort: legendnameshort,
+        customdata: customData,
+      };
+
+    }
+
+    mplist = [
+      "adams_w1",
+      "aeqd",
+      "aeqd_2H",
+      "airy_2H",
+      "aitoff",
+      "americ",
+      "apian1",
+      "apian2",
+      "apian2_2H",
+      "august",
+      "baar_sine_0.4_0",
+      "baar_sine_0.4_18",
+      "baar_sine_0.6_0",
+      "baar_sine_0.6_18",
+      "baar_sine_0.8_0",
+      "baar_sine_0.8_18",
+      "baar_sine_1.0_0",
+      "baar_sine_1.0_18",
+      "bacon",
+      "bacon_2H",
+      "baker",
+      "baranyi1",
+      "baranyi2",
+      "baranyi3",
+      "baranyi4",
+      "baranyi5",
+      "baranyi6",
+      "baranyi7",
+      "berg_star",
+      "boggs",
+      "bonne_0",
+      "bonne_18",
+      "bonne_36",
+      "bonne_54",
+      "bonne_90",
+      "bottom_0",
+      "bottom_36",
+      "bottom_54",
+      "bottom_90",
+      "braun_p",
+      "breus_g_2H",
+      "breus_h_2H",
+      "briesem",
+      "cabot_1.27",
+      "cabot_1.33",
+      "cabot_1.8",
+      "canters01",
+      "canters02",
+      "canters06",
+      "canters07",
+      "canters12",
+      "canters13",
+      "canters14",
+      "canters15",
+      "canters16",
+      "canters17",
+      "canters19",
+      "canters20",
+      "canters21",
+      "canters33",
+      "canters34",
+      "cea_0",
+      "cea_36",
+      "cea_54",
+      "comill",
+      "crast",
+      "cyl_s_0",
+      "cyl_s_54",
+      "cyl_s_72",
+      "deakin",
+      "denoy",
+      "eck_greif",
+      "eck1",
+      "eck2",
+      "eck3",
+      "eck4",
+      "eck5",
+      "eck6",
+      "eqc_0",
+      "eqc_36",
+      "eqc_54",
+      "eqearth",
+      "erdi",
+      "fahey",
+      "fouc_sinu_0",
+      "fouc_sinu_0.25",
+      "fouc_sinu_0.5",
+      "fouc_sinu_0.75",
+      "fouc_sinu_1",
+      "fouc_sinu_resc_0",
+      "fouc_sinu_resc_0.25",
+      "fouc_sinu_resc_0.5",
+      "fouc_sinu_resc_0.75",
+      "fouc_sinu_resc_1",
+      "fouc_stereo",
+      "fournier1",
+      "fournier1_2H",
+      "fournier2",
+      "franc14",
+      "franc5",
+      "gall_bomf",
+      "gins1_2H",
+      "gins2_2H",
+      "gins4",
+      "gins5",
+      "gins6",
+      "gins8",
+      "gins9",
+      "goode",
+      "gott_eqa",
+      "gott_eqa_scale",
+      "gott_mug",
+      "gott_mug_2H",
+      "gyorf_a",
+      "gyorf_b",
+      "gyorf_d",
+      "gyorf_e",
+      "gyorf_f",
+      "hammer",
+      "hatano_asym",
+      "hatano_sym",
+      "hexaf_eqa",
+      "hexaf_eqd",
+      "hill_eucy_0",
+      "hill_eucy_0.25",
+      "hill_eucy_0.75",
+      "hill_eucy_2",
+      "hill_eucy_6",
+      "holzel",
+      "kav5",
+      "kav7",
+      "kh_sh",
+      "laea",
+      "laea_2H",
+      "lagrng_1.2",
+      "lagrng_1.5",
+      "lagrng_2",
+      "loxim_0",
+      "loxim_36",
+      "loxim_54",
+      "loxim_72",
+      "maurer160",
+      "maurer187",
+      "maurer231",
+      "mayr",
+      "mcb_p3",
+      "mcb_q3",
+      "mcb_s2",
+      "mcb_s3",
+      "mcbt1",
+      "mcbt2",
+      "mcbt_fpp",
+      "mcbt_fpq",
+      "mcbt_fps",
+      "miller1",
+      "miller2",
+      "moll",
+      "moll_brom",
+      "natearth1",
+      "natearth2",
+      "nell",
+      "nell_h",
+      "nicol_2H",
+      "ortel",
+      "patterson",
+      "pavlov",
+      "philb_sinu_moll",
+      "putp1",
+      "putp2",
+      "putp3",
+      "putp3p",
+      "putp4p",
+      "putp5",
+      "putp5p",
+      "putp6",
+      "putp6p",
+      "qua_aut",
+      "raisz_arm_0",
+      "raisz_half_e_0",
+      "robinson",
+      "siemon4",
+      "sinucyli_0.25_0",
+      "sinucyli_0.25_36",
+      "sinucyli_0.25_54",
+      "sinucyli_0.25_72",
+      "sinucyli_0.5_0",
+      "sinucyli_0.5_36",
+      "sinucyli_0.5_54",
+      "sinucyli_0.5_72",
+      "sinucyli_0.75_0",
+      "sinucyli_0.75_36",
+      "sinucyli_0.75_54",
+      "sinucyli_0.75_72",
+      "sinucyli_homo_0.25_0",
+      "sinucyli_homo_0.25_36",
+      "sinucyli_homo_0.25_54",
+      "sinucyli_homo_0.25_72",
+      "sinucyli_homo_0.5_0",
+      "sinucyli_homo_0.5_36",
+      "sinucyli_homo_0.5_54",
+      "sinucyli_homo_0.5_72",
+      "sinucyli_homo_0.75_0",
+      "sinucyli_homo_0.75_36",
+      "sinucyli_homo_0.75_54",
+      "sinucyli_homo_0.75_72",
+      "sinus",
+      "snyd_me_flat",
+      "snyd_me_point",
+      "stab_w1",
+      "stab_w3",
+      "stereo_2H",
+      "strebe_eqa",
+      "times",
+      "tob_g1_0",
+      "tob_g1_0.25",
+      "tob_g1_0.5",
+      "tob_g1_0.75",
+      "tob_g1_1",
+      "tob1",
+      "tob2",
+      "urm_sinu_0",
+      "urm_sinu_0.25",
+      "urm_sinu_0.5",
+      "urm_sinu_0.75",
+      "urm_sinu_1",
+      "urm2",
+      "urm3",
+      "v_grint4",
+      "wag1",
+      "wag2",
+      "wag3_0",
+      "wag3_36",
+      "wag3_54",
+      "wag3_72",
+      "wag4",
+      "wag5",
+      "wag6",
+      "william_ols",
+      "wink_snyd",
+      "wink1_0",
+      "wink1_36",
+      "wink1_54",
+      "wink1_72",
+      "wink1_90",
+      "wink2",
+      "wink3",
+      "wink3_barth",
+      "wink3_oxford",
+      "baker_int",
+      "boggs_int",
+      "goode_int",
+      "mcb_p3_int",
+      "mcb_q3_int",
+      "mcb_s2_int",
+      "mcb_s3_int",
+      "mcbt_fpp_int",
+      "mcbt_fpq_int",
+      "mcbt_fps_int",
+      "moll_int",
+      "moll_brom_int",
+      "qua_aut_int",
+      "siemon4_int",
+      "sinus_int",
+    ]
+
+
+    int_area = [
+      0.474109154,
+      0.432416299,
+      0.119727823,
+      0.09754209,
+      0.119719121,
+      0.372811626,
+      0.227154029,
+      0.146604301,
+      0.146558533,
+      0.569336392,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.295882578,
+      0.317680705,
+      0.295373217,
+      0.273162512,
+      0.308732472,
+      0.232024993,
+      0.153825506,
+      0.229901924,
+      0.264732015,
+      0.207146,
+      0.125301806,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.502814545,
+      0.193866507,
+      0.099005348,
+      0,
+      0.33094367,
+      0.352523092,
+      0.491442161,
+      0,
+      0.090239026,
+      0.176837064,
+      0,
+      0.118844921,
+      0.152103259,
+      0.161229053,
+      0.127156581,
+      0.126259433,
+      0.081717602,
+      0.072347017,
+      0.226068156,
+      0.132301949,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.336414625,
+      0,
+      0.351066717,
+      0.323807307,
+      0.647034965,
+      0,
+      0.157947943,
+      0,
+      0.15181247,
+      0,
+      0.178529654,
+      0,
+      0.148817829,
+      0,
+      0.260664511,
+      0.215972957,
+      0.238683902,
+      0,
+      0,
+      0.207858184,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.000250759,
+      0.047691768,
+      0.100327138,
+      0.159162844,
+      0.225869608,
+      0,
+      0.320314019,
+      0.14258329,
+      0.541624235,
+      0,
+      0,
+      0.263721618,
+      0.045301404,
+      0.029015782,
+      0.134857371,
+      0.11854183,
+      0.175256774,
+      0.235660357,
+      0.172375853,
+      0,
+      0,
+      0.588044362,
+      0.731232864,
+      0.785581345,
+      0.159477833,
+      0.170712102,
+      0.179372603,
+      0.164498238,
+      0.171636676,
+      0,
+      0,
+      0,
+      0,
+      0.180721833,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.146662512,
+      0,
+      0.161454149,
+      0.421563412,
+      0,
+      0,
+      0.643642577,
+      0.437993269,
+      0.437882429,
+      0.177118992,
+      0.164356731,
+      0.158699572,
+      0.195100272,
+      0.263377915,
+      0.272852205,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.393120504,
+      0.345971193,
+      0,
+      0.001713547,
+      0.121185078,
+      0.102995665,
+      0,
+      0,
+      0.12765805,
+      0.213049136,
+      0.32148823,
+      0.183567367,
+      0,
+      0.058666286,
+      0,
+      0.20478333,
+      0.195364833,
+      0,
+      0.010404371,
+      0.175636581,
+      0,
+      0,
+      0,
+      0.568829502,
+      0.652986386,
+      0.109305082,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.36504077,
+      0,
+      0.256145909,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.390454641,
+      0.440494848,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.38430911,
+      0.484534224,
+      0.290681305,
+      0,
+      0.090214213,
+      0.17652604,
+      0.151946941,
+      0.160441273,
+      0.324892832,
+      0,
+      0.090221814,
+      0.191606388,
+      0,
+      0.114100491,
+      0.171951263,
+      0.140310764,
+      0.128748303,
+      0.185583856,
+      0.346476736,
+      0.163359353,
+      0.115402999,
+      0.132621488,
+      0.179199959,
+      0.295395593,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.001639074,
+      0,
+      0,
+      0,
+    ]
+
+    int_angular = [
+      0,
+      0.432340538,
+      0.119647145,
+      0.092683212,
+      0.350956548,
+      0.393616189,
+      0.277600618,
+      0.301664672,
+      0.20022837,
+      0,
+      0.455251429,
+      0.435714527,
+      0.439874134,
+      0.417425262,
+      0.432993668,
+      0.407137389,
+      0.521437351,
+      0.493555512,
+      0.456787189,
+      0.359501586,
+      0.285573587,
+      0.19512452,
+      0.201499762,
+      0.270895571,
+      0.256452847,
+      0.288739921,
+      0.259657759,
+      0.290916962,
+      0.233290015,
+      0.425799513,
+      0.471421073,
+      0.482691536,
+      0.509044553,
+      0.534886575,
+      0.550929013,
+      0.471421047,
+      0.436854152,
+      0.482938461,
+      0.550929013,
+      0.042748075,
+      0.080021838,
+      0.091240448,
+      0.396471667,
+      0.237225639,
+      0.228426804,
+      0.231543457,
+      0.376877675,
+      0.301793281,
+      0.204209262,
+      0.402145787,
+      0.235280707,
+      0.2081436,
+      0.219397,
+      0.254289789,
+      0.247964024,
+      0.306010563,
+      0.376303815,
+      0.303250872,
+      0.328686282,
+      0.364024675,
+      0.361690865,
+      0.521437194,
+      0.432077806,
+      0.477588948,
+      0.191954339,
+      0.450557939,
+      0.171905583,
+      0.156252906,
+      0.317976358,
+      0.367919984,
+      0.303512576,
+      0.435547462,
+      0.311787318,
+      0.409220698,
+      0.244845853,
+      0.358547949,
+      0.274349162,
+      0.373860029,
+      0.260605702,
+      0.215950985,
+      0.238730868,
+      0.364090844,
+      0.362546699,
+      0.194236708,
+      0.471421053,
+      0.450072998,
+      0.436543315,
+      0.439699156,
+      0.521476416,
+      0.471411311,
+      0.430294359,
+      0.393810023,
+      0.372171563,
+      0.429269988,
+      0.592038633,
+      0.617806491,
+      0.201506299,
+      0.549155812,
+      0.343050712,
+      0.346924495,
+      0.137446576,
+      0.151618593,
+      0.162676681,
+      0.274445541,
+      0.250776085,
+      0.210681067,
+      0.221216808,
+      0.205389189,
+      0.43281832,
+      0.435910597,
+      0.455618366,
+      0.608862107,
+      0.168376063,
+      0.221335375,
+      0.20461291,
+      0.183377803,
+      0.17952254,
+      0.174507291,
+      0.41147328,
+      0.373463944,
+      0.367811969,
+      0.333343251,
+      0.215746298,
+      0.551853505,
+      0.454084893,
+      0.40859656,
+      0.378435101,
+      0.363515049,
+      0.250656254,
+      0.386676793,
+      0.227139715,
+      0.096495317,
+      0.707274867,
+      0.18247964,
+      0,
+      0,
+      0,
+      0.268226088,
+      0.266483269,
+      0.270479007,
+      0.300484494,
+      0.24211369,
+      0.307228602,
+      0.228216573,
+      0.420615999,
+      0.421919193,
+      0.425249776,
+      0.43397868,
+      0.444693852,
+      0.393351242,
+      0.374196181,
+      0.394788524,
+      0.392305788,
+      0.399963929,
+      0.130574742,
+      0.176468005,
+      0.385521667,
+      0.427786014,
+      0.263635718,
+      0.273354294,
+      0.435740014,
+      0.41834234,
+      0.201828511,
+      0.275708143,
+      0.214139787,
+      0.33801114,
+      0.40920751,
+      0.384055262,
+      0.424487825,
+      0.434105506,
+      0.265848043,
+      0.367749003,
+      0.488247903,
+      0.278399903,
+      0.483192188,
+      0.377039435,
+      0.447588671,
+      0.662826119,
+      0.871516523,
+      0.274644322,
+      0.425870722,
+      0.472506737,
+      0.421696985,
+      0.38997196,
+      0.505798396,
+      0.433600631,
+      0.402876092,
+      0.373010773,
+      0.391608725,
+      0.416153207,
+      0.402695157,
+      0.385275089,
+      0.364496925,
+      0.438942222,
+      0.365936802,
+      0.418224004,
+      0.838740992,
+      0.433608792,
+      0.377901557,
+      0.406166747,
+      0.720312187,
+      0.447588671,
+      0.41031452,
+      0.409655642,
+      0.585078919,
+      0.471421053,
+      0.360323246,
+      0.36256451,
+      0.428313087,
+      0.562087724,
+      0,
+      0.362154188,
+      0.139964884,
+      0.471411311,
+      0.445586219,
+      0.43128159,
+      0.438498628,
+      0.515540378,
+      0.139479989,
+      0.094502025,
+      0.456871155,
+      0.445310642,
+      0.412841667,
+      0.374035314,
+      0.439545384,
+      0.142089449,
+      0.088554596,
+      0.209308344,
+      0.370093245,
+      0.310518344,
+      0.269203246,
+      0.24532823,
+      0.237835662,
+      0.353248704,
+      0.36163608,
+      0.301985312,
+      0.256074466,
+      0.246647459,
+      0.258841077,
+      0.274349162,
+      0.267744955,
+      0.279269122,
+      0.336168221,
+      0.483241466,
+      0.214385822,
+      0.247264872,
+      0.241758881,
+      0.250098664,
+      0.154142372,
+      0.221940737,
+      0.24654217,
+      0.279628465,
+      0.292772223,
+      0.310996835,
+      0.285803432,
+      0.27032816,
+      0.279055635,
+      0.269227511,
+      0.233179065,
+      0.269888929,
+      0.239399357,
+      0.222449379,
+      0.237338371,
+    ]
+
+
+    cabot1 = [
+      "cabot_1.27",
+      "cabot_1.33",
+      "cabot_1.8",
+    ]
+
+    cabot2 = [
+      0.33094367,
+      0.352523092,
+      0.491442161,
+    ]
+
+    cabot3 = [
+      0.237225639,
+      0.228426804,
+      0.231543457,
+    ]
+
+    cabotall2 = [
+      0.235070291,
+      0.227800562,
+      0.220870758,
+      0.214282738,
+      0.20803904,
+      0.202142763,
+      0.196597441,
+      0.191406888,
+      0.186575029,
+      0.182105706,
+      0.178002461,
+      0.174268315,
+      0.17090553,
+      0.167915376,
+      0.165297912,
+      0.163051786,
+      0.161174072,
+      0.159660157,
+      0.158503673,
+      0.157696501,
+      0.157228829,
+      0.157089267,
+      0.157265018,
+      0.157742083,
+      0.158505502,
+      0.159539601,
+      0.160828247,
+      0.162355088,
+      0.164103778,
+      0.166058175,
+      0.168202513,
+      0.170521534,
+      0.173000603,
+      0.175625782,
+      0.178383885,
+      0.181262508,
+      0.184250041,
+      0.187335664,
+      0.190509332,
+      0.193761748,
+      0.197084332,
+      0.200469183,
+      0.203909044,
+      0.207397257,
+      0.210927725,
+      0.21449487,
+      0.218093596,
+      0.221719251,
+      0.225367591,
+      0.229034747,
+      0.232717196,
+      0.236411728,
+      0.240115422,
+      0.243825621,
+      0.24753991,
+      0.251256092,
+      0.254972172,
+      0.258686339,
+      0.262396948,
+      0.266102508,
+      0.269801667,
+      0.273493201,
+      0.277176,
+      0.280849062,
+      0.284511482,
+      0.288162444,
+      0.291801212,
+      0.295427123,
+      0.299039584,
+      0.302638063,
+      0.306222083,
+      0.309791222,
+      0.313345103,
+      0.316883392,
+      0.320405797,
+      0.323912061,
+      0.327401961,
+      0.330875303,
+      0.334331923,
+      0.337771682,
+      0.341194463,
+      0.344600173,
+      0.347988737,
+      0.351360098,
+      0.354714218,
+      0.35805107,
+      0.361370644,
+      0.364672942,
+      0.367957977,
+      0.371225773,
+      0.374476365,
+      0.377709793,
+      0.380926109,
+      0.384125371,
+      0.387307643,
+      0.390472996,
+      0.393621507,
+      0.396753255,
+      0.399868328,
+      0.402966814,
+      0.406048808,
+      0.409114405,
+      0.412163707,
+      0.415196814,
+      0.418213831,
+      0.421214866,
+      0.424200027,
+      0.427169425,
+      0.430123169,
+      0.433061375,
+      0.435984154,
+      0.438891621,
+      0.441783893,
+      0.444661084,
+      0.44752331,
+      0.450370688,
+      0.453203335,
+      0.456021367,
+      0.458824901,
+      0.461614053,
+      0.464388939,
+      0.467149675,
+      0.469896378,
+      0.472629161,
+      0.475348141,
+      0.478053431,
+      0.480745144,
+      0.483423395,
+      0.486088295,
+      0.488739956,
+      0.49137849,
+      0.494004006,
+      0.496616614,
+      0.499216423,
+      0.501803541,
+      0.504378074,
+      0.50694013,
+      0.509489813,
+      0.512027229,
+      0.51455248,
+      0.51706567,
+      0.5195669,
+      0.522056271,
+      0.524533884,
+      0.526999837,
+      0.529454229,
+      0.531897156,
+      0.534328716,
+      0.536749004,
+      0.539158114,
+      0.541556139,
+      0.543943173,
+      0.546319307,
+      0.548684632,
+      0.551039238,
+      0.553383214,
+      0.555716648,
+      0.558039626,
+      0.560352236,
+      0.562654563,
+      0.564946692,
+      0.567228705,
+      0.569500686,
+      0.571762717,
+      0.574014879,
+      0.576257252,
+      0.578489915,
+      0.580712947,
+      0.582926425,
+      0.585130427,
+      0.587325029,
+      0.589510305,
+      0.591686331,
+      0.59385318,
+      0.596010925,
+      0.598159638,
+      0.60029939,
+      0.602430253,
+      0.604552295,
+      0.606665587,
+      0.608770196,
+      0.61086619,
+      0.612953636,
+      0.615032601,
+      0.617103149,
+      0.619165346,
+      0.621219257,
+      0.623264943,
+      0.625302469,
+      0.627331897,
+      0.629353287,
+      0.631366701,
+      0.633372199,
+      0.635369841,
+      0.637359685,
+      0.63934179,
+      0.641316214,
+      0.643283014,
+      0.645242247,
+      0.647193967,
+      0.649138232,
+    ]
+
+    cabotall3 = [
+      0.606790149,
+      0.597465282,
+      0.588342482,
+      0.579414642,
+      0.570675065,
+      0.562117444,
+      0.553735826,
+      0.545524595,
+      0.537478441,
+      0.529592346,
+      0.521861564,
+      0.514281601,
+      0.506848199,
+      0.499557324,
+      0.492405152,
+      0.485388055,
+      0.478502589,
+      0.471745487,
+      0.465113643,
+      0.45860411,
+      0.452214087,
+      0.445940912,
+      0.439782055,
+      0.43373511,
+      0.427797792,
+      0.421967927,
+      0.41624345,
+      0.410622395,
+      0.405102897,
+      0.399683182,
+      0.394361563,
+      0.389136439,
+      0.38400629,
+      0.378969671,
+      0.374025212,
+      0.369171613,
+      0.364407641,
+      0.359732127,
+      0.355143964,
+      0.350642103,
+      0.346225553,
+      0.341893375,
+      0.337644683,
+      0.333478637,
+      0.329394449,
+      0.32539137,
+      0.321468698,
+      0.317625769,
+      0.313861959,
+      0.310176679,
+      0.306569375,
+      0.303039526,
+      0.299586641,
+      0.296210257,
+      0.29290994,
+      0.289685277,
+      0.286535882,
+      0.283461386,
+      0.280461441,
+      0.277535715,
+      0.274683892,
+      0.271905669,
+      0.269200752,
+      0.266568859,
+      0.264009713,
+      0.261523043,
+      0.25910858,
+      0.256766058,
+      0.25449521,
+      0.252295764,
+      0.250167445,
+      0.248109973,
+      0.246123056,
+      0.244206395,
+      0.242359678,
+      0.240582578,
+      0.238874755,
+      0.237235852,
+      0.235665491,
+      0.234163277,
+      0.232728794,
+      0.231361603,
+      0.230061242,
+      0.228827225,
+      0.227659041,
+      0.226556154,
+      0.225518002,
+      0.224543996,
+      0.223633521,
+      0.222785934,
+      0.222000567,
+      0.221276725,
+      0.220613685,
+      0.220010702,
+      0.219467002,
+      0.218981788,
+      0.218554242,
+      0.218183519,
+      0.217868756,
+      0.217609068,
+      0.217403552,
+      0.217251286,
+      0.217151332,
+      0.217102739,
+      0.21710454,
+      0.217155757,
+      0.217255403,
+      0.217402481,
+      0.217595986,
+      0.21783491,
+      0.21811824,
+      0.218444958,
+      0.218814048,
+      0.219224494,
+      0.21967528,
+      0.220165397,
+      0.220693837,
+      0.221259598,
+      0.221861688,
+      0.22249912,
+      0.223170918,
+      0.223876115,
+      0.224613756,
+      0.225382897,
+      0.226182609,
+      0.227011974,
+      0.227870088,
+      0.228756063,
+      0.229669027,
+      0.230608121,
+      0.231572503,
+      0.232561348,
+      0.233573848,
+      0.23460921,
+      0.23566666,
+      0.236745439,
+      0.237844807,
+      0.23896404,
+      0.240102432,
+      0.241259293,
+      0.242433953,
+      0.243625754,
+      0.24483406,
+      0.246058249,
+      0.247297716,
+      0.248551871,
+      0.249820143,
+      0.251101974,
+      0.252396824,
+      0.253704167,
+      0.255023491,
+      0.256354301,
+      0.257696116,
+      0.259048469,
+      0.260410905,
+      0.261782985,
+      0.263164284,
+      0.264554386,
+      0.265952893,
+      0.267359414,
+      0.268773575,
+      0.270195009,
+      0.271623365,
+      0.2730583,
+      0.274499483,
+      0.275946593,
+      0.27739932,
+      0.278857364,
+      0.280320433,
+      0.281788247,
+      0.283260534,
+      0.284737029,
+      0.286217479,
+      0.287701637,
+      0.289189265,
+      0.290680133,
+      0.292174017,
+      0.293670703,
+      0.295169982,
+      0.296671653,
+      0.298175522,
+      0.299681401,
+      0.301189108,
+      0.302698467,
+      0.304209309,
+      0.305721471,
+      0.307234793,
+      0.308749123,
+      0.310264314,
+      0.311780221,
+      0.313296709,
+      0.314813644,
+      0.316330897,
+      0.317848344,
+      0.319365865,
+      0.320883346,
+      0.322400674,
+      0.323917742,
+      0.325434445,
+      0.326950684,
+      0.328466362,
+    ]
+
+    cyl1 = [
+      "cyl_s_0",
+      "cyl_s_54",
+      "cyl_s_72",
+    ]
+
+    cyl2 = [
+      0.351066717,
+      0.323807307,
+      0.647034965,
+    ]
+
+    cyl3 = [
+      0.171905583,
+      0.156252906,
+      0.317976358,
+    ]
+
+    cylall2 = [
+      0.351017402,
+      0.350947573,
+      0.350738194,
+      0.350389591,
+      0.349902308,
+      0.349277116,
+      0.34851502,
+      0.347617267,
+      0.346585362,
+      0.345421081,
+      0.344126488,
+      0.342703959,
+      0.341156204,
+      0.339486295,
+      0.337697698,
+      0.335794307,
+      0.333780485,
+      0.331661109,
+      0.329441615,
+      0.327128061,
+      0.324727181,
+      0.322246455,
+      0.319694182,
+      0.317079563,
+      0.314412785,
+      0.311705118,
+      0.308969018,
+      0.306218233,
+      0.303467919,
+      0.300734755,
+      0.29803707,
+      0.295394958,
+      0.292830402,
+      0.290367375,
+      0.288031946,
+      0.285852347,
+      0.283859028,
+      0.282084664,
+      0.280564123,
+      0.279334374,
+      0.278434333,
+      0.277904639,
+      0.277787354,
+      0.278125588,
+      0.278963061,
+      0.280343607,
+      0.282310643,
+      0.284906635,
+      0.288172575,
+      0.292147532,
+      0.296868269,
+      0.302368996,
+      0.308681245,
+      0.315833902,
+      0.323853391,
+      0.332763988,
+      0.342588281,
+      0.353347724,
+      0.365063286,
+      0.377756163,
+      0.391448545,
+      0.406164419,
+      0.421930423,
+      0.438776725,
+      0.456737978,
+      0.475854342,
+      0.496172617,
+      0.517747536,
+      0.540643259,
+      0.564935159,
+      0.590711979,
+      0.618078514,
+      0.647158976,
+      0.678101301,
+      0.71108275,
+      0.746317308,
+      0.784065642,
+      0.82464875,
+      0.868467103,
+      0.916028138,
+      0.967986911,
+      1.025208276,
+      1.088865858,
+      1.160607524,
+      1.242849348,
+      1.339340176,
+      1.456364539,
+      1.605710388,
+      1.813856613,
+      2.165350408,
+    ]
+
+    cylall3 = [
+      0.171915829,
+      0.171895397,
+      0.171834118,
+      0.171732033,
+      0.171589217,
+      0.171405771,
+      0.171181834,
+      0.170917577,
+      0.17061321,
+      0.170268985,
+      0.169885203,
+      0.169462212,
+      0.169000423,
+      0.168500308,
+      0.167962412,
+      0.167387364,
+      0.166775883,
+      0.16612879,
+      0.165447027,
+      0.164731661,
+      0.163983913,
+      0.163205166,
+      0.162396991,
+      0.161561172,
+      0.160699728,
+      0.159814945,
+      0.158909406,
+      0.157986033,
+      0.15704812,
+      0.156099384,
+      0.155144013,
+      0.154186719,
+      0.1532328,
+      0.152288203,
+      0.151359598,
+      0.150454454,
+      0.14958112,
+      0.148748909,
+      0.147968194,
+      0.147250495,
+      0.146608575,
+      0.146056529,
+      0.145609872,
+      0.14528562,
+      0.145102346,
+      0.14508024,
+      0.145241128,
+      0.145608473,
+      0.146207353,
+      0.147064393,
+      0.148207679,
+      0.149666636,
+      0.151471892,
+      0.153655119,
+      0.156248892,
+      0.159286557,
+      0.16280214,
+      0.166830315,
+      0.171406455,
+      0.176566763,
+      0.182348528,
+      0.188790486,
+      0.195933316,
+      0.203820267,
+      0.212497936,
+      0.222017191,
+      0.23243428,
+      0.243812137,
+      0.256221939,
+      0.269744973,
+      0.2844749,
+      0.300520536,
+      0.318009339,
+      0.33709182,
+      0.357947265,
+      0.380791236,
+      0.405885645,
+      0.433552521,
+      0.464193284,
+      0.498316391,
+      0.536578192,
+      0.579845378,
+      0.629294356,
+      0.686577349,
+      0.754117421,
+      0.835674992,
+      0.9375547,
+      1.071582365,
+      1.26431918,
+      1.600553013,
+    ]
+
+    eqc1 = [
+      "eqc_0",
+      "eqc_36",
+      "eqc_54",
+    ]
+
+    eqc2 = [
+      0.260664511,
+      0.215972957,
+      0.238683902,
+    ]
+
+    eqc3 = [
+      0.260605702,
+      0.215950985,
+      0.238730868,
+    ]
+
+    eqcall2 = [
+      0.260620231,
+      0.260575404,
+      0.260440984,
+      0.26021715,
+      0.259904207,
+      0.259502584,
+      0.259012841,
+      0.258435676,
+      0.257771928,
+      0.257022592,
+      0.256188829,
+      0.255271972,
+      0.25427355,
+      0.253195299,
+      0.25203918,
+      0.250807404,
+      0.249502456,
+      0.24812712,
+      0.246684507,
+      0.245178096,
+      0.243611764,
+      0.241989834,
+      0.240317114,
+      0.238598954,
+      0.236841299,
+      0.235050751,
+      0.233234631,
+      0.231401057,
+      0.229559018,
+      0.227718457,
+      0.225890354,
+      0.224086825,
+      0.222321207,
+      0.22060816,
+      0.218963751,
+      0.217405551,
+      0.21595271,
+      0.214626028,
+      0.213448003,
+      0.212442858,
+      0.211636539,
+      0.211056675,
+      0.210732494,
+      0.210694702,
+      0.2109753,
+      0.211607364,
+      0.212624775,
+      0.214061915,
+      0.215953339,
+      0.218333447,
+      0.221236164,
+      0.224694664,
+      0.228741153,
+      0.23340673,
+      0.238721352,
+      0.244713899,
+      0.251412358,
+      0.258844112,
+      0.267036342,
+      0.276016523,
+      0.285813007,
+      0.296455689,
+      0.307976753,
+      0.320411491,
+      0.33379921,
+      0.348184246,
+      0.363617102,
+      0.380155754,
+      0.397867176,
+      0.416829156,
+      0.43713249,
+      0.458883703,
+      0.482208448,
+      0.507255855,
+      0.53420417,
+      0.563268194,
+      0.594709282,
+      0.62884904,
+      0.666088524,
+      0.706935801,
+      0.752046697,
+      0.802287102,
+      0.858832146,
+      0.923331977,
+      0.998206259,
+      1.087209723,
+      1.196637076,
+      1.338295438,
+      1.538705523,
+      1.88253774,
+    ]
+
+    eqcall3 = [
+      0.260620231,
+      0.260575404,
+      0.260440984,
+      0.26021715,
+      0.259904207,
+      0.259502584,
+      0.259012841,
+      0.258435676,
+      0.257771928,
+      0.257022592,
+      0.256188829,
+      0.255271972,
+      0.25427355,
+      0.253195299,
+      0.25203918,
+      0.250807404,
+      0.249502456,
+      0.24812712,
+      0.246684507,
+      0.245178096,
+      0.243611764,
+      0.241989834,
+      0.240317114,
+      0.238598954,
+      0.236841299,
+      0.235050751,
+      0.233234631,
+      0.231401057,
+      0.229559018,
+      0.227718457,
+      0.225890354,
+      0.224086825,
+      0.222321207,
+      0.22060816,
+      0.218963751,
+      0.217405551,
+      0.21595271,
+      0.214626028,
+      0.213448003,
+      0.212442858,
+      0.211636539,
+      0.211056675,
+      0.210732494,
+      0.210694702,
+      0.2109753,
+      0.211607364,
+      0.212624775,
+      0.214061915,
+      0.215953339,
+      0.218333447,
+      0.221236164,
+      0.224694664,
+      0.228741153,
+      0.23340673,
+      0.238721352,
+      0.244713899,
+      0.251412358,
+      0.258844112,
+      0.267036342,
+      0.276016523,
+      0.285813007,
+      0.296455689,
+      0.307976753,
+      0.320411491,
+      0.33379921,
+      0.348184246,
+      0.363617102,
+      0.380155754,
+      0.397867176,
+      0.416829156,
+      0.43713249,
+      0.458883703,
+      0.482208448,
+      0.507255855,
+      0.53420417,
+      0.563268194,
+      0.594709282,
+      0.62884904,
+      0.666088524,
+      0.706935801,
+      0.752046697,
+      0.802287102,
+      0.858832146,
+      0.923331977,
+      0.998206259,
+      1.087209723,
+      1.196637076,
+      1.338295438,
+      1.538705523,
+      1.88253774,
+    ]
+
+    fouc_resc1 = [
+      "fouc_sinu_resc_0",
+      "fouc_sinu_resc_0.25",
+      "fouc_sinu_resc_0.5",
+      "fouc_sinu_resc_0.75",
+      "fouc_sinu_resc_1",
+    ]
+
+    fouc_resc2 = [
+      0.000250759,
+      0.047691768,
+      0.100327138,
+      0.159162844,
+      0.225869608,
+    ]
+
+    fouc_resc3 = [
+      0.471411311,
+      0.430294359,
+      0.393810023,
+      0.372171563,
+      0.429269988,
+    ]
+
+    fouc_resc_all2 = [
+      9.17E-17,
+      0.00182021,
+      0.003647071,
+      0.005480631,
+      0.00732094,
+      0.009168047,
+      0.011022004,
+      0.01288286,
+      0.014750667,
+      0.016625478,
+      0.018507346,
+      0.020396323,
+      0.022292464,
+      0.024195822,
+      0.026106454,
+      0.028024415,
+      0.029949762,
+      0.031882551,
+      0.03382284,
+      0.035770688,
+      0.037726155,
+      0.039689298,
+      0.04166018,
+      0.043638862,
+      0.045625405,
+      0.047619872,
+      0.049622327,
+      0.051632834,
+      0.053651458,
+      0.055678265,
+      0.05771332,
+      0.059756693,
+      0.061808451,
+      0.063868663,
+      0.065937398,
+      0.068014729,
+      0.070100727,
+      0.072195463,
+      0.074299013,
+      0.076411449,
+      0.078532849,
+      0.080663287,
+      0.082802842,
+      0.084951591,
+      0.087109615,
+      0.089276993,
+      0.091453807,
+      0.09364014,
+      0.095836074,
+      0.098041696,
+      0.10025709,
+      0.102482344,
+      0.104717546,
+      0.106962784,
+      0.109218151,
+      0.111483737,
+      0.113759635,
+      0.11604594,
+      0.118342748,
+      0.120650155,
+      0.12296826,
+      0.125297162,
+      0.127636962,
+      0.129987763,
+      0.132349669,
+      0.134722785,
+      0.137107218,
+      0.139503077,
+      0.141910471,
+      0.144329513,
+      0.146760315,
+      0.149202992,
+      0.151657661,
+      0.154124441,
+      0.156603451,
+      0.159094813,
+      0.161598651,
+      0.164115091,
+      0.166644259,
+      0.169186286,
+      0.171741303,
+      0.174309444,
+      0.176890843,
+      0.179485638,
+      0.18209397,
+      0.18471598,
+      0.187351813,
+      0.190001614,
+      0.192665533,
+      0.195343721,
+      0.198036331,
+      0.200743521,
+      0.203465448,
+      0.206202274,
+      0.208954163,
+      0.211721281,
+      0.214503799,
+      0.217301888,
+      0.220115724,
+      0.222945485,
+      0.225791353,
+    ]
+
+    fouc_resc_all3 = [
+      0.471556452,
+      0.469880348,
+      0.468205517,
+      0.46653211,
+      0.464860282,
+      0.463190193,
+      0.46152201,
+      0.459855904,
+      0.458192052,
+      0.456530639,
+      0.454871854,
+      0.453215895,
+      0.451562963,
+      0.449913271,
+      0.448267035,
+      0.446624482,
+      0.444985844,
+      0.443351364,
+      0.441721291,
+      0.440095885,
+      0.438475415,
+      0.436860159,
+      0.435250405,
+      0.433646451,
+      0.432048608,
+      0.430457197,
+      0.428872551,
+      0.427295015,
+      0.425724947,
+      0.424162721,
+      0.422608721,
+      0.421063349,
+      0.41952702,
+      0.418000169,
+      0.416483244,
+      0.414976712,
+      0.413481059,
+      0.411996792,
+      0.410524435,
+      0.409064536,
+      0.407617666,
+      0.406184419,
+      0.404765413,
+      0.403361294,
+      0.401972737,
+      0.400600443,
+      0.399245148,
+      0.397907618,
+      0.396588656,
+      0.395289101,
+      0.394009831,
+      0.392751767,
+      0.391515873,
+      0.390303163,
+      0.389114699,
+      0.387951598,
+      0.386815035,
+      0.385706249,
+      0.384626542,
+      0.383577292,
+      0.382559951,
+      0.381576057,
+      0.380627239,
+      0.379715222,
+      0.378841842,
+      0.378009048,
+      0.37721892,
+      0.376473676,
+      0.375775688,
+      0.375127499,
+      0.37453184,
+      0.373991649,
+      0.373510098,
+      0.373090618,
+      0.372736931,
+      0.372453089,
+      0.372243516,
+      0.372113058,
+      0.372067047,
+      0.372111369,
+      0.372252556,
+      0.372497886,
+      0.372855517,
+      0.37333464,
+      0.373945678,
+      0.374700533,
+      0.375612897,
+      0.37669866,
+      0.377976435,
+      0.379468263,
+      0.381200568,
+      0.383205481,
+      0.385522734,
+      0.388202448,
+      0.391309423,
+      0.394930066,
+      0.399184367,
+      0.404248633,
+      0.410405029,
+      0.418178788,
+      0.429073336,
+    ]
+
+    lagrng1 = [
+      "lagrng_1.2",
+      "lagrng_1.5",
+      "lagrng_2",
+    ]
+
+    lagrng2 = [
+      0.643642577,
+      0.437993269,
+      0.437882429,
+    ]
+
+    lagrng3 = [
+      0,
+      0,
+      0,
+    ]
+
+    loxim1 = [
+      "loxim_0",
+      "loxim_36",
+      "loxim_54",
+      "loxim_72",
+    ]
+
+    loxim2 = [
+      0.177118992,
+      0.164356731,
+      0.158699572,
+      0.195100272,
+    ]
+
+    loxim3 = [
+      0.268226088,
+      0.266483269,
+      0.270479007,
+      0.300484494,
+    ]
+
+    wag31 = [
+      "wag3_0",
+      "wag3_36",
+      "wag3_54",
+      "wag3_72",
+    ]
+
+    wag32 = [
+      0.17652604,
+      0.151946941,
+      0.160441273,
+      0.324892832,
+    ]
+
+    wag33 = [
+      0.269203246,
+      0.24532823,
+      0.237835662,
+      0.353248704,
+    ]
+
+    wag3all2 = [
+      0.176490453,
+      0.176467263,
+      0.176397716,
+      0.176281879,
+      0.176119865,
+      0.175911833,
+      0.175657992,
+      0.175358603,
+      0.175013982,
+      0.174624507,
+      0.174190618,
+      0.173712828,
+      0.173191726,
+      0.172627987,
+      0.172022379,
+      0.171375776,
+      0.170689166,
+      0.169963668,
+      0.169200541,
+      0.168401205,
+      0.167567257,
+      0.166700492,
+      0.165802925,
+      0.164876818,
+      0.163924707,
+      0.162949433,
+      0.161954178,
+      0.160942503,
+      0.15991839,
+      0.15888629,
+      0.157851171,
+      0.156818579,
+      0.155794693,
+      0.154786392,
+      0.153801326,
+      0.152847986,
+      0.151935784,
+      0.151075129,
+      0.150277509,
+      0.149555569,
+      0.148923185,
+      0.148395537,
+      0.147989168,
+      0.147722028,
+      0.147613509,
+      0.147684449,
+      0.147957119,
+      0.148455181,
+      0.149203613,
+      0.150228616,
+      0.151557483,
+      0.153218469,
+      0.155240631,
+      0.157653695,
+      0.160487921,
+      0.163774024,
+      0.16754313,
+      0.171826817,
+      0.176657225,
+      0.182067272,
+      0.188090962,
+      0.194763813,
+      0.202123393,
+      0.210209978,
+      0.21906734,
+      0.228743682,
+      0.239292726,
+      0.250775006,
+      0.263259401,
+      0.276824966,
+      0.291563163,
+      0.30758062,
+      0.32500257,
+      0.343977244,
+      0.364681556,
+      0.387328579,
+      0.412177589,
+      0.439547812,
+      0.469837668,
+      0.503552391,
+      0.541344865,
+      0.584078035,
+      0.632924255,
+      0.689531344,
+      0.756317561,
+      0.837038037,
+      0.93799151,
+      1.070997017,
+      1.262607377,
+      1.597597642,
+    ]
+
+    wag3all3 = [
+      0.26923065,
+      0.269209815,
+      0.269147325,
+      0.269043218,
+      0.268897563,
+      0.268710455,
+      0.268482018,
+      0.26821241,
+      0.267901817,
+      0.267550463,
+      0.26715861,
+      0.266726558,
+      0.266254654,
+      0.265743292,
+      0.265192921,
+      0.264604046,
+      0.263977238,
+      0.263313138,
+      0.262612467,
+      0.261876031,
+      0.261104734,
+      0.260299586,
+      0.259461715,
+      0.25859238,
+      0.257692986,
+      0.2567651,
+      0.255810466,
+      0.25483103,
+      0.253828957,
+      0.252806657,
+      0.251766816,
+      0.250712417,
+      0.249646782,
+      0.248573603,
+      0.247496988,
+      0.246421499,
+      0.245352207,
+      0.244294743,
+      0.24325536,
+      0.242240997,
+      0.241259351,
+      0.240318953,
+      0.239429255,
+      0.238600718,
+      0.237844914,
+      0.237174624,
+      0.236603954,
+      0.236148448,
+      0.235825214,
+      0.235653045,
+      0.235652551,
+      0.235846291,
+      0.2362589,
+      0.236917227,
+      0.237850454,
+      0.239090233,
+      0.2406708,
+      0.242629102,
+      0.245004928,
+      0.247841035,
+      0.25118331,
+      0.255080949,
+      0.259586697,
+      0.264757144,
+      0.270653134,
+      0.277340295,
+      0.284889746,
+      0.293379033,
+      0.302893336,
+      0.313527047,
+      0.3253858,
+      0.338589092,
+      0.353273657,
+      0.369597849,
+      0.38774737,
+      0.407942847,
+      0.430450008,
+      0.455593598,
+      0.483776815,
+      0.51550916,
+      0.551447506,
+      0.592458784,
+      0.639719625,
+      0.69488276,
+      0.760372394,
+      0.839951136,
+      0.939927352,
+      1.072132706,
+      1.263136844,
+      1.597737691,
+    ]
+
+    wink11 = [
+      "wink1_0",
+      "wink1_36",
+      "wink1_54",
+      "wink1_72",
+      "wink1_90",
+    ]
+
+    wink12 = [
+      0.171951263,
+      0.140310764,
+      0.128748303,
+      0.185583856,
+      0.346476736,
+    ]
+
+    wink13 = [
+      0.274349162,
+      0.267744955,
+      0.279269122,
+      0.336168221,
+      0.483241466,
+    ]
+
+    wink11all2 = [
+      0.171915829,
+      0.171887163,
+      0.171801196,
+      0.171658013,
+      0.171457759,
+      0.171200636,
+      0.170886909,
+      0.170516905,
+      0.170091015,
+      0.169609698,
+      0.169073487,
+      0.168482985,
+      0.16783888,
+      0.167141941,
+      0.16639303,
+      0.165593105,
+      0.164743228,
+      0.163844574,
+      0.162898438,
+      0.161906247,
+      0.160869569,
+      0.159790125,
+      0.158669805,
+      0.157510679,
+      0.156315011,
+      0.155085281,
+      0.1538242,
+      0.152534732,
+      0.151220112,
+      0.149883873,
+      0.148529868,
+      0.147162296,
+      0.145785732,
+      0.144405153,
+      0.143025966,
+      0.141654044,
+      0.140295749,
+      0.138957966,
+      0.137648128,
+      0.136374241,
+      0.135144906,
+      0.133969336,
+      0.13285736,
+      0.131819422,
+      0.130866574,
+      0.130010445,
+      0.129263198,
+      0.128637477,
+      0.128146323,
+      0.127803079,
+      0.127621278,
+      0.127614499,
+      0.127796231,
+      0.128179703,
+      0.128777728,
+      0.129602537,
+      0.130665626,
+      0.131977627,
+      0.133548185,
+      0.135385887,
+      0.137498206,
+      0.139891494,
+      0.142571004,
+      0.145540946,
+      0.148804579,
+      0.152364322,
+      0.156221887,
+      0.16037842,
+      0.164834663,
+      0.169591102,
+      0.174648125,
+      0.180006178,
+      0.185665912,
+      0.191628328,
+      0.197894923,
+      0.204467836,
+      0.211349996,
+      0.218545288,
+      0.226058737,
+      0.233896719,
+      0.242067229,
+      0.250580215,
+      0.259448025,
+      0.268686025,
+      0.278313485,
+      0.288354925,
+      0.298842292,
+      0.309818776,
+      0.321346433,
+      0.333525025,
+      0.34657359,
+    ]
+
+    wink11all3 = [
+      0.274376608,
+      0.274366836,
+      0.274337561,
+      0.2742889,
+      0.274221051,
+      0.274134294,
+      0.274028985,
+      0.273905565,
+      0.273764556,
+      0.273606563,
+      0.273432276,
+      0.273242473,
+      0.273038019,
+      0.272819867,
+      0.272589066,
+      0.272346756,
+      0.272094176,
+      0.271832662,
+      0.271563654,
+      0.271288694,
+      0.271009433,
+      0.270727635,
+      0.270445172,
+      0.270164039,
+      0.269886346,
+      0.269614331,
+      0.269350355,
+      0.269096911,
+      0.268856625,
+      0.26863226,
+      0.268426718,
+      0.268243044,
+      0.268084427,
+      0.267954205,
+      0.267855867,
+      0.267793051,
+      0.267769551,
+      0.267789314,
+      0.267856442,
+      0.267975192,
+      0.268149977,
+      0.268385361,
+      0.26868606,
+      0.26905694,
+      0.26950301,
+      0.270029423,
+      0.270641466,
+      0.27134456,
+      0.272144247,
+      0.273046189,
+      0.274056159,
+      0.27518003,
+      0.27642377,
+      0.277793433,
+      0.279295148,
+      0.280935112,
+      0.282719584,
+      0.284654872,
+      0.286747332,
+      0.289003357,
+      0.291429376,
+      0.294031851,
+      0.296817278,
+      0.299792185,
+      0.302963139,
+      0.306336758,
+      0.309919718,
+      0.31371877,
+      0.317740764,
+      0.321992677,
+      0.326481639,
+      0.331214984,
+      0.336200291,
+      0.341445452,
+      0.346958736,
+      0.352748885,
+      0.358825216,
+      0.365197754,
+      0.371877398,
+      0.378876122,
+      0.386207242,
+      0.393885758,
+      0.401928819,
+      0.410356356,
+      0.419192003,
+      0.428464475,
+      0.438209769,
+      0.448475015,
+      0.459326059,
+      0.470866035,
+      0.483314508,
+    ]
+
+    loximall2 = [
+      0.177118992,
+      0.177096466,
+      0.177087354,
+      0.177004137,
+      0.176934171,
+      0.1768485,
+      0.176718071,
+      0.176571985,
+      0.176381288,
+      0.17620437,
+      0.175982826,
+      0.175746304,
+      0.175494772,
+      0.175228016,
+      0.174918221,
+      0.174594012,
+      0.17425539,
+      0.173902775,
+      0.173535971,
+      0.173128348,
+      0.172707656,
+      0.172274302,
+      0.171828824,
+      0.171371414,
+      0.170876322,
+      0.170397211,
+      0.169881837,
+      0.169357675,
+      0.168825134,
+      0.168285578,
+      0.167739642,
+      0.167188448,
+      0.166609354,
+      0.166051641,
+      0.165493067,
+      0.164912252,
+      0.164356642,
+      0.163783989,
+      0.163239812,
+      0.162684725,
+      0.162161957,
+      0.161654224,
+      0.161147033,
+      0.160680772,
+      0.160240848,
+      0.159832058,
+      0.15947419,
+      0.159142959,
+      0.158872434,
+      0.158655061,
+      0.158509219,
+      0.158429954,
+      0.158426433,
+      0.158515921,
+      0.158699502,
+      0.15898947,
+      0.159403812,
+      0.15994504,
+      0.160631825,
+      0.161476083,
+      0.162488386,
+      0.163690403,
+      0.165096884,
+      0.16672691,
+      0.168589245,
+      0.17071558,
+      0.173132386,
+      0.175850692,
+      0.178918217,
+      0.182326634,
+      0.186156096,
+      0.190399923,
+      0.195100572,
+      0.200342158,
+      0.206123056,
+      0.212511374,
+      0.219633353,
+      0.227517399,
+      0.236245076,
+      0.245975142,
+      0.256865848,
+      0.269081572,
+      0.282926223,
+      0.298787958,
+      0.317080964,
+      0.338640202,
+      0.364719722,
+      0.39758744,
+      0.442093418,
+      0.512816843,
+    ]
+
+    loximall3 = [
+      0.268226088,
+      0.268213825,
+      0.268228144,
+      0.268193029,
+      0.268183976,
+      0.268176129,
+      0.268144358,
+      0.26811352,
+      0.268058941,
+      0.268031081,
+      0.267979191,
+      0.267929043,
+      0.267880758,
+      0.267833793,
+      0.267764108,
+      0.267696759,
+      0.267631222,
+      0.267568243,
+      0.267507708,
+      0.267425858,
+      0.267346879,
+      0.267271366,
+      0.267199575,
+      0.267131267,
+      0.267043978,
+      0.266985036,
+      0.266907216,
+      0.26683517,
+      0.26676905,
+      0.266709716,
+      0.266657212,
+      0.266612126,
+      0.266553477,
+      0.266525712,
+      0.266507805,
+      0.266479185,
+      0.266483185,
+      0.266479285,
+      0.266509531,
+      0.266534982,
+      0.266595959,
+      0.266674837,
+      0.266753828,
+      0.266873067,
+      0.26701501,
+      0.267181747,
+      0.267392831,
+      0.267616434,
+      0.267888786,
+      0.26819589,
+      0.268556326,
+      0.268958096,
+      0.269405045,
+      0.269914943,
+      0.270478845,
+      0.271101782,
+      0.271812849,
+      0.272583761,
+      0.273452166,
+      0.274405416,
+      0.275468391,
+      0.276632623,
+      0.277916719,
+      0.279330147,
+      0.28088968,
+      0.282602738,
+      0.284485402,
+      0.28655664,
+      0.288834913,
+      0.291339722,
+      0.29409989,
+      0.297138335,
+      0.300484575,
+      0.304186454,
+      0.30827309,
+      0.312794486,
+      0.317831974,
+      0.323439321,
+      0.329694839,
+      0.33672311,
+      0.344664321,
+      0.353678578,
+      0.364022686,
+      0.376037916,
+      0.390128709,
+      0.407024701,
+      0.427859044,
+      0.454678862,
+      0.491888228,
+      0.552796011,
+    ]
+
+    const twohemi1 = [
+      "aeqd_2H",
+      "airy_2H",
+      "apian2_2H",
+      "bacon_2H",
+      "breus_g_2H",
+      "breus_h_2H",
+      "fournier1_2H",
+      "gins1_2H",
+      "gins2_2H",
+      "gott_mug_2H",
+      "laea_2H",
+      "nicol_2H",
+      "stereo_2H",
+    ]
+
+    const twohemi2 = [
+      0.119727823, 0.09754209, 0.146558533, 0.317680705, 0.193866507,
+      0.099005348, 0.14258329, 0.045301404, 0.029015782, 0.785581345,
+      0, 0.12765805, 0.36504077
+    ]
+
+    const twohemi3 = [
+      0.119647145, 0.092683212, 0.20022837, 0.359501586, 0.080021838,
+      0.091240448, 0.201506299, 0.151618593, 0.162676681, 0.168376063,
+      0.18247964, 0.201828511, 0
+    ]
+
+    const int1 = [
+      "baker_int",
+      "boggs_int",
+      "goode_int",
+      "mcb_p3_int",
+      "mcb_q3_int",
+      "mcb_s2_int",
+      "mcb_s3_int",
+      "mcbt_fpp_int",
+      "mcbt_fpq_int",
+      "mcbt_fps_int",
+      "moll_int",
+      "moll_brom_int",
+      "qua_aut_int",
+      "siemon4_int",
+      "sinus_int",
+    ]
+
+    const int2 = [
+      0.295395593,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.001639074,
+      0,
+      0,
+      0,
+    ]
+
+    const int3 = [
+      0.154142372,
+      0.221940737,
+      0.24654217,
+      0.279628465,
+      0.292772223,
+      0.310996835,
+      0.285803432,
+      0.27032816,
+      0.279055635,
+      0.269227511,
+      0.233179065,
+      0.269888929,
+      0.239399357,
+      0.222449379,
+      0.237338371,
+    ]
+
+    const azclass1 = [
+      "aeqd",
+      "gott_mug",
+      "laea",
+    ]
+
+    const conpsconclass = [
+      "bonne_0",
+      "bonne_18",
+      "bonne_36",
+      "bonne_54",
+      "bonne_90",
+      "bottom_0",
+      "bottom_36",
+      "bottom_54",
+      "bottom_90",
+    ]
+
+    const miscclass = [
+      "adams_w1",
+      "august",
+      "gott_eqa",
+      "gott_eqa_scale",
+      "lagrng_1.2",
+      "lagrng_1.5",
+      "lagrng_2",
+      "maurer187",
+      "philb_sinu_moll",
+      "raisz_arm_0",
+      "raisz_half_e_0",
+    ]
+
+    const poconclass1 = [
+      "aitoff",
+      "americ",
+      "wink3_barth",
+      "briesem",
+      "canters07",
+      "canters12",
+      "canters13",
+      "canters14",
+      "canters20",
+      "canters21",
+      "eck_greif",
+      "fournier1",
+      "franc14",
+      "franc5",
+      "gins4",
+      "gins5",
+      "gins6",
+      "gins9",
+      "gyorf_d",
+      "gyorf_e",
+      "gyorf_f",
+      "hammer",
+      "hill_eucy_0",
+      "hill_eucy_0.25",
+      "hill_eucy_0.75",
+      "hill_eucy_2",
+      "hill_eucy_6",
+      "maurer160",
+      "wink3_oxford",
+      "stab_w1",
+      "stab_w3",
+      "strebe_eqa",
+      "v_grint4",
+    ]
+
+    const cylclass1 = [
+      "braun_p",
+      "cea_0",
+      "cea_36",
+      "cea_54",
+      "comill",
+      "cyl_s_0",
+      "cyl_s_54",
+      "cyl_s_72",
+      "eqc_0",
+      "eqc_36",
+      "eqc_54",
+      "kh_sh",
+      "miller1",
+      "miller2",
+      "patterson",
+      "pavlov",
+      "tob1",
+      "tob2",
+      "urm2",
+      "urm3",
+    ]
+
+    const cylclass2 = [
+      0.502814545,
+      0,
+      0,
+      0,
+      0.336414625,
+      0.351066717,
+      0.323807307,
+      0.647034965,
+      0.260664511,
+      0.215972957,
+      0.238683902,
+      0.421563412,
+      0.393120504,
+      0.345971193,
+      0.32148823,
+      0.183567367,
+      0.390454641,
+      0.440494848,
+      0.38430911,
+      0.484534224,
+    ]
+
+    const cylclass3 = [
+      0.042748075,
+      0.521437194,
+      0.432077806,
+      0.477588948,
+      0.191954339,
+      0.171905583,
+      0.156252906,
+      0.317976358,
+      0.260605702,
+      0.215950985,
+      0.238730868,
+      0.096495317,
+      0.130574742,
+      0.176468005,
+      0.214139787,
+      0.33801114,
+      0.139479989,
+      0.094502025,
+      0.142089449,
+      0.088554596,
+    ]
+
+    const star1 = [
+      "berg_star",
+      "hexaf_eqa",
+      "hexaf_eqd",
+      "maurer231",
+      "william_ols",
+    ]
+
+    const star2 = [
+      0.125301806, 0, 0.180721833, 0, 0
+    ];
+
+    const star3 = [
+      0.233290015, 0.333343251, 0.215746298, 0.228216573, 0.246647459
+    ];
+
+    function quarterCircleArc(radius) {
+      const numPoints = 100;
+      const theta = Array.from({ length: numPoints }, (_, i) => i * (Math.PI / 2) / (numPoints - 1));
+      const x = theta.map(t => radius * Math.cos(t));
+      const y = theta.map(t => radius * Math.sin(t));
+
+      const trace = {
+        x: x,
+        y: y,
+        mode: 'lines',
+        type: 'scatter',
+        name: '',
+        line: { color: 'red', width: 1, dash: "dot" },
+        showlegend: false,
+        hoverinfo: 'none'
+      };
+
+      return trace;
+    }
+
+    const traces = [];
+
+    traces.push(quarterCircleArc(0.5))
+    traces.push(quarterCircleArc(10))
+
+    traces.push(plotlines(twohemi3, twohemi2, twohemi1, "o", 'none', "blue", 0.5, "Projections with two hemishperes", "Two Hemi."));
+    traces.push(plotlines(star3, star2, star1, "*", 'none', "red", 0.5, "Projections with lobes", "Lobes"));
+    traces.push(plotlines(int3, int2, int1, "d", 'none', "orange", 0.5, "Interrupted projections", "Inter."));
+    traces.push(plotlines(cylclass3, cylclass2, cylclass1, "s", 'none', "chocolate", 0.5, "Cylindrical projections", "Cylind."));
+
+    function filtered_push(includedElements, excludedElements, traces, marker, markerfacecolor, color, markeredgewidth, legendname, legendnameshort) {
+
+      filtered = null
+
+      if (includedElements) {
+        filtered = mplist
+          .map((item, idx) => [item, idx])
+          .filter(([item, idx]) => includedElements.has(item));
+      }
+
+      if (excludedElements) {
+        filtered = mplist
+          .map((item, idx) => [item, idx])
+          .filter(([item, idx]) => !excludedElements.has(item));
+      }
+
+      const crossList = filtered.map(([item, idx]) => item);
+      const indices = filtered.map(([item, idx]) => idx);
+
+      traces.push(plotlines(
+        indices.map(i => int_angular[i]),
+        indices.map(i => int_area[i]),
+        indices.map(i => mplist[i]),
+        marker,
+        markerfacecolor,
+        color,
+        markeredgewidth,
+        legendname,
+        legendnameshort
+      ));
+    }
+
+    filtered_push(new Set(azclass1), null, traces, "c", 'none', "cyan", 0.5, "Azimuthal projections", "Azimuthal")
+    filtered_push(new Set(conpsconclass), null, traces, "^", 'none', "magenta", 0.5, "Pseudo-conic projections", "Pseudo-conic")
+
+    const excludedElements = new Set([
+      ...cylclass1,
+      ...twohemi1,
+      ...star1,
+      ...int1,
+      ...cabot1,
+      ...fouc_resc1,
+      ...lagrng1,
+      ...loxim1,
+      ...wag31,
+      ...wink11,
+      ...poconclass1,
+      ...azclass1,
+      ...conpsconclass,
+      ...miscclass
+    ]);
+
+    filtered_push(null, excludedElements, traces, "o", 'none', "pink", 0.5, "Pseudo-cylindrical projections", "Pseudo-cylindrical")
+    filtered_push(new Set(poconclass1), null, traces, "d", 'none', "dodgerblue", 0.5, "Polyconic projections", "Polyconic")
+    filtered_push(new Set(miscclass), null, traces, "x", 'none', "limegreen", 0.5, "Miscellaneous projections", "Miscellaneous")
+
+    traces.push(plotlines([10, 20], [10, 20], ["", ""], "+-", 'none', "white", 0.5, "&nbsp;", ""))
+
+    traces.push(plotlines(cyl3, cyl2, cyl1, "s-", 'none', "saddlebrown", 0.5, "Cylindrical Stereographic", ""))
+    traces.push(plotlines(cylall3, cylall2, Array.from({ length: 91 }, (_, y) => `Cylindrical Stereographic [φₜₛ = ${y}°]`), "--", 'none', "saddlebrown", 0.5, "", ""))
+
+    traces.push(plotlines(eqc3, eqc2, eqc1, "s-", 'none', "peru", 0.5, "Equirectangular", ""))
+    traces.push(plotlines(eqcall3, eqcall2, Array.from({ length: 91 }, (_, y) => `Equirectangular [φₜₛ = ${y}°]`), "--", 'none', "peru", 0.5, "", ""))
+
+    traces.push(plotlines(cabot3, cabot2, cabot1, "+-", 'none', "magenta", 0.5, "Cabot", ""))
+    traces.push(plotlines(cabotall3, cabotall2, Array.from({ length: 201 }, (_, i) => `Cabot [aspect ratio = ${(0.5 + i * 0.01).toFixed(2)}]`), "--", 'none', "magenta", 0.5, "", ""))
+
+    traces.push(plotlines(fouc_resc3, fouc_resc2, fouc_resc1, "+-", 'none', "lightpink", 0.5, "Foucaut sinusoidal [Rescaled]", ""))
+    traces.push(plotlines(fouc_resc_all3, fouc_resc_all2, Array.from({ length: 101 }, (_, i) => `Foucaut sinusoidal [α = ${(i * 0.01).toFixed(2)}, Rescaled]`), "--", 'none', "lightpink", 0.5, "", ""))
+
+    traces.push(plotlines(wag33, wag32, wag31, "+-", 'none', "deeppink", 0.5, "Wagner III", ""))
+    traces.push(plotlines(wag3all3, wag3all2, Array.from({ length: 91 }, (_, y) => `Wagner III [φₜₛ = ${y}°]`), "--", 'none', "deeppink", 0.5, "", ""))
+
+    traces.push(plotlines(wink13, wink12, wink11, "+-", 'none', "lightcoral", 0.5, "Winkel I", ""))
+    traces.push(plotlines(wink11all3, wink11all2, Array.from({ length: 91 }, (_, y) => `Winkel I [φₜₛ = ${y}°]`), "--", 'none', "lightcoral", 0.5, "", ""))
+
+    traces.push(plotlines(loxim3, loxim2, loxim1, "+-", 'none', "orange", 0.5, "Loximuthal", ""))
+    traces.push(plotlines(loximall3, loximall2, Array.from({ length: 91 }, (_, y) => `Loximuthal [φ₁ = ${y}°]`), "-", 'none', "orange", 0.5, "", ""))
+
+    traces.push(plotlines(lagrng3, lagrng2, lagrng1, "x-", 'none', "orange", 0.5, "Lambert–Lagrange", ""))
+
+    const x0 = 0.5;
+    const y0 = 0.5;
+    const radius = 0.02;
+    const arrowLen = 0.07;
+
+    const layout = {
+      annotations: [
+        {
+          x: 0.5,
+          y: 0.5,
+          xref: 'x',
+          yref: 'y',
+          text: "tbd.",
+          showarrow: true,
+          arrowhead: 2,
+          ax: 50,
+          ay: 30,
+          font: {
+            color: 'black',
+            size: 16
+          },
+          bgcolor: 'rgba(255, 0, 0, 0.6)',
+          bordercolor: 'black',
+          borderwidth: 1,
+        },
+        {
+          x: 0.5794,
+          y: 0.2143,
+          xref: 'x',
+          yref: 'y',
+          text: "Cabot",
+          showarrow: true,
+          arrowhead: 2,
+          ax: 40,
+          ay: 20,
+          font: {
+            color: 'black',
+            size: 14
+          },
+          bgcolor: 'magenta',
+          opacity: 0.6,
+          bordercolor: 'black',
+          borderwidth: 1
+        },
+        {
+          x: 0.4120,
+          y: 0.0722,
+          xref: 'x',
+          yref: 'y',
+          text: "Foucaut Sinusoidal [Rescaled]",
+          showarrow: true,
+          arrowhead: 2,
+          ax: 150,
+          ay: -30,
+          font: {
+            color: 'black',
+            size: 14
+          },
+          bgcolor: 'lightpink',
+          opacity: 0.6,
+          bordercolor: 'black',
+          borderwidth: 1
+        },
+        {
+          x: 0.4593,
+          y: 0.3214,
+          xref: 'x',
+          yref: 'y',
+          text: "Winkel I",
+          showarrow: true,
+          arrowhead: 2,
+          ax: 50,
+          ay: 20,
+          font: {
+            color: 'black',
+            size: 14
+          },
+          bgcolor: 'lightcoral',
+          opacity: 0.6,
+          bordercolor: 'black',
+          borderwidth: 1
+        },
+        {
+          x: 0.5224,
+          y: 0.4775,
+          xref: 'x',
+          yref: 'y',
+          text: "Loximuthal",
+          showarrow: true,
+          arrowhead: 2,
+          ax: 40,
+          ay: 30,
+          font: {
+            color: 'black',
+            size: 14
+          },
+          bgcolor: 'orange',
+          opacity: 0.6,
+          bordercolor: 'black',
+          borderwidth: 1
+        },
+        {
+          x: 0.7604,
+          y: 0.7563,
+          xref: 'x',
+          yref: 'y',
+          text: "Wagner III",
+          showarrow: true,
+          arrowhead: 2,
+          ax: 40,
+          ay: 30,
+          font: {
+            color: 'black',
+            size: 14
+          },
+          bgcolor: 'deeppink',
+          opacity: 0.6,
+          bordercolor: 'black',
+          borderwidth: 1
+        },
+        {
+          x: 0.8023,
+          y: 0.8023,
+          xref: 'x',
+          yref: 'y',
+          text: "Equirectangular",
+          showarrow: true,
+          arrowhead: 2,
+          ax: -50,
+          ay: -30,
+          font: {
+            color: 'black',
+            size: 14
+          },
+          bgcolor: 'peru',
+          opacity: 0.6,
+          bordercolor: 'black',
+          borderwidth: 1
+        },
+        {
+          x: 0.3580,
+          y: 0.7111,
+          xref: 'x',
+          yref: 'y',
+          text: "Cylindrical Stereographic",
+          showarrow: true,
+          arrowhead: 2,
+          ax: -100,
+          ay: -20,
+          font: {
+            color: 'black',
+            size: 14
+          },
+          bgcolor: 'saddlebrown',
+          opacity: 0.6,
+          bordercolor: 'black',
+          borderwidth: 1
+        },
+        {
+          x: 0.0,
+          y: 0.6,
+          xref: 'x',
+          yref: 'y',
+          text: "Lambert–Lagrange",
+          showarrow: true,
+          arrowhead: 2,
+          ax: 90,
+          ay: -30,
+          font: {
+            color: 'black',
+            size: 14
+          },
+          bgcolor: 'orange',
+          opacity: 0.6,
+          bordercolor: 'black',
+          borderwidth: 1
+        }
+      ],
+      shapes: [
+        {
+          type: 'circle',
+          xref: 'x',
+          yref: 'y',
+          x0: x0 - radius,
+          y0: y0 - radius,
+          x1: x0 + radius,
+          y1: y0 + radius,
+          line: {
+            color: 'red',
+            width: 2,
+          }
+        }
+      ],
+      margin: { l: 40, r: 40, t: 40, b: 40 },
+      clickmode: 'event+select',
+      xaxis: {
+        scaleanchor: 'y',
+        showticklabels: true,
+        range: [-0.1, 1],
+        title: {
+          text: '<i>E<sub>∠</sub></i>',
+          font: { size: 14 }
+        }
+      },
+      yaxis: {
+        showticklabels: true,
+        range: [-0.1, 1],
+        title: {
+          text: '<i>E<sub>A</sub></i>',
+          font: { size: 14 }
+        }
+      },
+      legend: {
+        orientation: 'h',
+        y: 1.15
+      }
+    };
+
+    const projectionData = {
+      Interrupted: {
+        "baker_int": ["Interrupted", "Uninterrupted"],
+        "boggs_int": ["Interrupted", "Uninterrupted"],
+        "goode_int": ["Interrupted", "Uninterrupted"],
+        "mcb_p3_int": ["Interrupted", "Uninterrupted"],
+        "mcb_q3_int": ["Interrupted", "Uninterrupted"],
+        "mcb_s2_int": ["Interrupted", "Uninterrupted"],
+        "mcb_s3_int": ["Interrupted", "Uninterrupted"],
+        "mcbt_fpp_int": ["Interrupted", "Uninterrupted"],
+        "mcbt_fpq_int": ["Interrupted", "Uninterrupted"],
+        "mcbt_fps_int": ["Interrupted", "Uninterrupted"],
+        "moll_int": ["Interrupted", "Uninterrupted"],
+        "moll_brom_int": ["Interrupted", "Uninterrupted"],
+        "qua_aut_int": ["Interrupted", "Uninterrupted"],
+        "siemon4_int": ["Interrupted", "Uninterrupted"],
+        "sinus_int": ["Interrupted", "Uninterrupted"],
+      },
+      "Lobed": {
+        "berg_star": [],
+        "hexaf_eqa": [],
+        "hexaf_eqd": [],
+        "maurer231": [],
+        "william_ols": [],
+      },
+      "Two-Hemisphere": {
+        "aeqd_2H": ["Two-Hemisphere", "Global"],
+        "laea_2H": ["Two-Hemisphere", "Global"],
+        "airy_2H": ["Two-Hemisphere", "Global"],
+        "apian2_2H": ["Two-Hemisphere", "Global"],
+        "bacon_2H": ["Two-Hemisphere", "Global"],
+        "breus_g_2H": ["Two-Hemisphere"],
+        "breus_h_2H": ["Two-Hemisphere"],
+        "fournier1_2H": ["Two-Hemisphere", "Global"],
+        "gins1_2H": ["Two-Hemisphere"],
+        "gins2_2H": ["Two-Hemisphere"],
+        "gott_mug_2H": ["Two-Hemisphere", "Global"],
+        "nicol_2H": ["Two-Hemisphere"],
+        "stereo_2H": ["Two-Hemisphere"],
+      },
+      Cylindrical: {
+        "braun_p": [],
+        "cea": ["φₜₛ = 0°", "φₜₛ = 36°", "φₜₛ = 54°"],
+        "comill": [],
+        "cyl_s": ["φₜₛ = 0°", "φₜₛ = 54°", "φₜₛ = 72°"],
+        "eqc": ["φₜₛ = 0° (Plate Carrée)", "φₜₛ = 36°", "φₜₛ = 54°"],
+        "kh_sh": [],
+        "miller": ["I", "II"],
+        "patterson": [],
+        "pavlov": [],
+        "tob": ["I", "II"],
+        "urm": ["II", "III"],
+      },
+      "Pseudo-cylindrical": {
+        "apian1": [],
+        "apian2": ["Global", "Two-Hemisphere"],
+        "baar_sine": ["a = 0.4, φₜₛ = 0°", "a = 0.6, φₜₛ = 0°", "a = 0.8, φₜₛ = 0°", "a = 1.0, φₜₛ = 0°", "a = 0.4, φₜₛ = 18°", "a = 0.6, φₜₛ = 18°", "a = 0.8, φₜₛ = 18°", "a = 1.0, φₜₛ = 18°"],
+        "bacon": ["Global", "Two-Hemisphere"],
+        "baker": ["Uninterrupted", "Interrupted"],
+        "baranyi": ["I", "II", "III", "IV", "V", "VI", "VII"],
+        "boggs": ["Uninterrupted", "Interrupted"],
+        "cabot": ["aspect ratio = 1.27", "aspect ratio = 1.33", "aspect ratio = 1.8"],
+        "canters_pscy": ["W01", "W02", "W06", "W15", "W16", "W17", "W19", "W33", "W34"],
+        "crast": [],
+        "deakin": [],
+        "denoy": [],
+        "eck": ["I", "II", "III", "IV", "V", "VI"],
+        "eqearth": [],
+        "erdi": [],
+        "fahey": [],
+        "fouc_sinu": ["α = 0", "α = 0.25", "α = 0.5", "α = 0.75", "α = 1"],
+        "fouc_sinu_resc": ["α = 0", "α = 0.25", "α = 0.5", "α = 0.75", "α = 1"],
+        "fouc_stereo": [],
+        "fournier2": [],
+        "gall_bomf": [],
+        "gins": ["VIII"],
+        "goode": ["Uninterrupted", "Interrupted"],
+        "gyorf": ["A", "B"],
+        "hatano": ["Symmetric", "Asymmetric"],
+        "holzel": [],
+        "kav": ["V", "VII"],
+        "loxim": ["φ₁ = 0°", "φ₁ = 36°", "φ₁ = 54°", "φ₁ = 72°"],
+        "mayr": [],
+        "mcb_p3": ["Uninterrupted", "Interrupted"],
+        "mcb_q3": ["Uninterrupted", "Interrupted"],
+        "mcb_s2": ["Uninterrupted", "Interrupted"],
+        "mcb_s3": ["Uninterrupted", "Interrupted"],
+        "mcbt1": [],
+        "mcbt2": [],
+        "mcbt_fpp": ["Uninterrupted", "Interrupted"],
+        "mcbt_fpq": ["Uninterrupted", "Interrupted"],
+        "mcbt_fps": ["Uninterrupted", "Interrupted"],
+        "moll": ["Uninterrupted", "Interrupted"],
+        "moll_brom": ["Uninterrupted", "Interrupted"],
+        "natearth": ["I", "II"],
+        "nell": [],
+        "nell_h": [],
+        "ortel": [],
+        "putp": ["P₁", "P₂", "P₃", "P\'₃", "P\'₄", "P₅", "P\'₅", "P₆", "P\'₆"],
+        "qua_aut": ["Uninterrupted", "Interrupted"],
+        "robinson": [],
+        "siemon4": ["Uninterrupted", "Interrupted"],
+        "sinucyli": ["α = 0.25, φₜₛ = 0°", "α = 0.25, φₜₛ = 36°", "α = 0.25, φₜₛ = 54°", "α = 0.25, φₜₛ = 72°", "α = 0.5, φₜₛ = 0°", "α = 0.5, φₜₛ = 36°", "α = 0.5, φₜₛ = 54°", "α = 0.5, φₜₛ = 72°", "α = 0.75, φₜₛ = 0°", "α = 0.75, φₜₛ = 36°", "α = 0.75, φₜₛ = 54°", "α = 0.75, φₜₛ = 72°"],
+        "sinucyli_homo": ["α = 0.25, φₜₛ = 0°", "α = 0.25, φₜₛ = 36°", "α = 0.25, φₜₛ = 54°", "α = 0.25, φₜₛ = 72°", "α = 0.5, φₜₛ = 0°", "α = 0.5, φₜₛ = 36°", "α = 0.5, φₜₛ = 54°", "α = 0.5, φₜₛ = 72°", "α = 0.75, φₜₛ = 0°", "α = 0.75, φₜₛ = 36°", "α = 0.75, φₜₛ = 54°", "α = 0.75, φₜₛ = 72°"],
+        "sinus": ["Uninterrupted", "Interrupted"],
+        "snyd_me": ["Flat Pole", "Pointed Pole"],
+        "times": [],
+        "tob_g1": ["α = 0.25", "α = 0.5", "α = 0.75"],
+        "urm_sinu": ["b = 0", "b = 0.25", "b = 0.5", "b = 0.75", "b = 1"],
+        "wag1": [],
+        "wag2": [],
+        "wag3": ["φₜₛ = 0°", "φₜₛ = 36°", "φₜₛ = 54°", "φₜₛ = 72°"],
+        "wag4": [],
+        "wag5": [],
+        "wag6": [],
+        "wink_snyd": [],
+        "wink1": ["φₜₛ = 0°", "φₜₛ = 36°", "φₜₛ = 54°", "φₜₛ = 72°", "φₜₛ = 90°"],
+        "wink2": [],
+      },
+      Azimuthal: {
+        "aeqd": ["Global", "Two-Hemisphere"],
+        "gott_mug": ["Global", "Two-Hemisphere"],
+        "laea": ["Global", "Two-Hemisphere"],
+      },
+      "Pseudo-conic": {
+        "bonne": ["φ₁ = 0°", "φ₁ = 18°", "φ₁ = 36°", "φ₁ = 54°", "φ₁ = 90°"],
+        "bottom": ["φ₁ = 0°", "φ₁ = 36°", "φ₁ = 54°", "φ₁ = 90°"],
+      },
+      Polyconic: {
+        "aitoff": [],
+        "americ": [],
+        "canters_poco": ["W07", "W12", "W13", "W14", "W20", "W21"],
+        "eck_greif": [],
+        "fournier1": ["Global", "Two-Hemisphere"],
+        "franc": ["V", "XIV"],
+        "gins": ["IV", "V", "VI", "IX"],
+        "gyorf": ["D", "E", "F"],
+        "hammer": ["Default with no scaling", "Apply Briesemeister scaling."],
+        "hill_eucy": ["K = 0", "K = 0.25", "K = 0.75", "K = 2", "K = 6"],
+        "maurer160": [],
+        "stab_w": ["I", "III"],
+        "strebe_eqa": [],
+        "v_grint": ["IV"],
+        "wink3": ["Default with no scaling", "Apply Bartholomew scaling", "Apply Oxford Atlas scaling"],
+      },
+      Miscellaneous: {
+        "adams_w1": [],
+        "august": [],
+        "gott_eqa": [],
+        "gott_eqa_scale": [],
+        "lagrng": ["n = 1.2", "n = 1.5", "n = 2"],
+        "maurer187": [],
+        "philb_sinu_moll": [],
+        "raisz": ["Armadillo [tilt angle = 0°]", "Half Ellipsoidal [tilt angle = 0°]"]
+      },
+    };
+
+    const toRoman = {
+      "1": "I",
+      "2": "II",
+      "3": "III",
+      "4": "IV",
+      "5": "V",
+      "6": "VI",
+      "7": "VII",
+      "8": "VIII",
+      "9": "IX",
+      "10": "X",
+      "11": "XI",
+      "12": "XII",
+      "13": "XIII",
+      "14": "XIV",
+      "15": "XV",
+      "16": "XVI",
+      "17": "XVII",
+      "18": "XVIII",
+      "19": "XIX",
+      "20": "XX"
+    };
+
+    const toLowerDig = {
+      "1": "₁",
+      "2": "₂",
+      "3": "₃",
+      "4": "₄",
+      "5": "₅",
+      "6": "₆",
+    }
+
+    function findProjectionPath(target) {
+      for (const level1 in projectionData) {
+        const level2Group = projectionData[level1];
+
+        for (const level2 in level2Group) {
+          const level3List = level2Group[level2];
+
+          if (level2 === target) {
+            return [level1, level2, null];
+          }
+
+          if (Array.isArray(level3List)) {
+            for (const level3 of level3List) {
+              if (level3 === target) {
+                return [level1, level2, level3];
+              }
+            }
+          }
+        }
+      }
+
+      if (target.startsWith("lagrng")) {
+        return ["Miscellaneous", "lagrng", "n = " + target.substring(7)];
+      }
+
+      if (target.startsWith("cabot")) {
+        return ["Pseudo-cylindrical", "cabot", "aspect ratio = " + target.substring(6)];
+      }
+
+      if (target.startsWith("gyorf")) {
+        if (target.endsWith("a") || target.endsWith("b")) {
+          return ["Pseudo-cylindrical", "gyorf", target.slice(-1).toUpperCase()];
+        }
+        else {
+          return ["Polyconic", "gyorf", target.slice(-1).toUpperCase()];
+        }
+      }
+
+      if (target.startsWith("tob") || target.startsWith("urm")) {
+        return ["Cylindrical", target.substring(0, 3), toRoman[target.slice(-1)]];
+      }
+
+      if (target.startsWith("eck") || target.startsWith("kav")) {
+        return ["Pseudo-cylindrical", target.substring(0, 3), toRoman[target.slice(-1)]];
+      }
+
+      if (target === "gins8") {
+        return ["Pseudo-cylindrical", target.substring(0, 4), toRoman[target.slice(-1)]];
+      }
+
+      if (target.startsWith("gins")) {
+        return ["Polyconic", target.substring(0, 4), toRoman[target.slice(-1)]];
+      }
+
+      if (target.startsWith("franc")) {
+        return ["Polyconic", target.substring(0, 5), toRoman[target.slice(-1)]];
+      }
+
+      if (target.startsWith("miller") || target.startsWith("stab_w")) {
+        return ["Cylindrical", target.substring(0, 6), toRoman[target.slice(-1)]];
+      }
+
+      if (target.startsWith("baranyi")) {
+        return ["Pseudo-cylindrical", target.substring(0, 7), toRoman[target.slice(-1)]];
+      }
+
+      if (target.startsWith("v_grint")) {
+        return ["Polyconic", target.substring(0, 7), toRoman[target.slice(-1)]];
+      }
+
+      if (target.startsWith("natearth")) {
+        return ["Pseudo-cylindrical", target.substring(0, 8), toRoman[target.slice(-1)]];
+      }
+
+      if (target.startsWith("cea") || target.startsWith("eqc")) {
+        return ["Cylindrical", target.substring(0, 3), "φₜₛ = " + target.slice(-2).replace(/^_+/, '') + "°"];
+      }
+
+      if (target.startsWith("cyl_s")) {
+        return ["Cylindrical", target.substring(0, 5), "φₜₛ = " + target.slice(-2).replace(/^_+/, '') + "°"];
+      }
+
+      if (target.startsWith("wag3")) {
+        return ["Pseudo-cylindrical", target.substring(0, 4), "φₜₛ = " + target.slice(-2).replace(/^_+/, '') + "°"];
+      }
+
+      if (target.startsWith("wink1")) {
+        return ["Pseudo-cylindrical", target.substring(0, 5), "φₜₛ = " + target.slice(-2).replace(/^_+/, '') + "°"];
+      }
+
+      if (target.startsWith("fouc_sinu_resc")) {
+        return ["Pseudo-cylindrical", target.substring(0, 14), "α = " + target.slice(-4).replace(/^[_sc]+/, '')];
+      }
+
+      if (target.startsWith("loxim")) {
+        return ["Pseudo-cylindrical", target.substring(0, 5), "φ₁ = " + target.slice(-2).replace(/^_+/, '') + "°"];
+      }
+
+      if (target.startsWith("raisz")) {
+        if (target.endsWith("arm_0")) {
+          return ["Miscellaneous", "raisz", "Armadillo [tilt angle = 0°]"];
+        }
+        if (target.endsWith("half_e_0")) {
+          return ["Miscellaneous", "raisz", "Half Ellipsoidal [tilt angle = 0°]"];
+        }
+      }
+
+      if (target.startsWith("canters")) {
+        switch (target.slice(-2)) {
+          case "01":
+          case "02":
+          case "06":
+          case "15":
+          case "16":
+          case "17":
+          case "19":
+          case "33":
+          case "34":
+            return ["Pseudo-cylindrical", target.substring(0, 7) + "_pscy", "W" + target.slice(-2)];
+        }
+        return ["Polyconic", target.substring(0, 7) + "_poco", "W" + target.slice(-2)];
+      }
+
+      if (target.startsWith("putp")) {
+        if (target.length == 5) {
+          return ["Pseudo-cylindrical", target.substring(0, 4), "P" + toLowerDig[target.slice(-1)]];
+        }
+        if (target.length == 6) {
+          return ["Pseudo-cylindrical", target.substring(0, 4), "P\'" + toLowerDig[target.slice(-2, -1)]];
+        }
+      }
+
+      if (target.startsWith("snyd_me")) {
+        if (target.endsWith("_flat")) {
+          return ["Pseudo-cylindrical", target.substring(0, 7), "Flat Pole"];
+        }
+        if (target.endsWith("_point")) {
+          return ["Pseudo-cylindrical", target.substring(0, 7), "Pointed Pole"];
+        }
+      }
+
+      if (target.startsWith("baar_sine")) {
+        return ["Pseudo-cylindrical", target.substring(0, 9), "a = " + target.slice(-7, -3).replace(/^_+/, '') + ", φₜₛ = " + target.slice(-3).replace(/^_+/, '') + "°"];
+      }
+
+      if (target.startsWith("sinucyli_homo")) {
+        return ["Pseudo-cylindrical", target.substring(0, 13), "α = " + target.slice(-7, -3).replace(/^_+/, '') + ", φₜₛ = " + target.slice(-3).replace(/^_+/, '') + "°"];
+      }
+
+      if (target.startsWith("sinucyli")) {
+        return ["Pseudo-cylindrical", target.substring(0, 8), "α = " + target.slice(-7, -3).replace(/^_+/, '') + ", φₜₛ = " + target.slice(-3).replace(/^_+/, '') + "°"];
+      }
+
+      return null;
+    }
+
+    Plotly.newPlot('main-graph', traces, layout, {
+      modeBarButtonsToRemove: [
+        'select2d',
+        'lasso2d',
+        'autoScale2d'
+      ]
+    }).then(() => {
+      const radiusInPixels = 20;
+
+      const graphDiv = document.getElementById('main-graph');
+
+      document.addEventListener('mouseup', () => {
+        setTimeout(() => {
+
+          const xRange = graphDiv.layout.xaxis.range || graphDiv.layout.xaxis.autorange;
+          const yRange = graphDiv.layout.yaxis.range || graphDiv.layout.yaxis.autorange;
+
+          if (!xRange || !yRange) return;
+
+          const bbox = graphDiv.getBoundingClientRect();
+          const xPixelsPerUnit = bbox.width / (xRange[1] - xRange[0]);
+
+          const radiusInDataCoords = radiusInPixels / xPixelsPerUnit;
+
+          Plotly.relayout('main-graph', {
+            'shapes[0].x0': angu_pos - radiusInDataCoords,
+            'shapes[0].x1': angu_pos + radiusInDataCoords,
+            'shapes[0].y0': area_pos - radiusInDataCoords,
+            'shapes[0].y1': area_pos + radiusInDataCoords,
+            'annotations[0].x': angu_pos + radiusInDataCoords * 0.707,
+            'annotations[0].y': area_pos - radiusInDataCoords * 0.707,
+          });
+        }, 100)
+
+      });
+
+      setTimeout(() => {
+        if (!graphDiv._plotlyClickBound) {
+          graphDiv.on('plotly_click', function (data) {
+            if (data.points[0].data.name === "") {
+              return
+            }
+
+            const point = data.points[0];
+            const x = point.x;
+            const y = point.y;
+            const color = data.points[0].fullData.marker.color;
+
+            const text = point.text;
+            const customdata = point.customdata[1];
+            const curveNumber = point.curveNumber;
+            const pointIndex = point.pointIndex;
+
+            const path = findProjectionPath(customdata);
+
+            if (path) {
+              const [level1, level2, level3] = path;
+
+              document.getElementById('level-1').value = level1;
+
+              populateLevel2();
+              document.getElementById('level-2').value = level2;
+
+              populateLevel3();
+              if (level3) {
+                document.getElementById('level-3').value = level3;
+              }
+
+              updateImages(color);
+            }
+
+          });
+          graphDiv._plotlyClickBound = true;
+        }
+      }, 200);
+    })
+
+    const graphDiv = document.getElementById('main-graph');
+
+    graphDiv.on('plotly_hover', function (data) {
+      if (!data.points || data.points[0].data.name === "") {
+        return
+      }
+
+      const cx = data.points[0].x;
+      const cy = data.points[0].y;
+      const color = data.points[0].fullData.marker.color;
+
+      const radius = Math.sqrt(cx ** 2 + cy ** 2)
+
+      const numPoints = 100;
+      const theta = Array.from({ length: numPoints }, (_, i) => i * Math.PI / 2 / (numPoints - 1));
+      const arcX = theta.map(t => radius * Math.cos(t));
+      const arcY = theta.map(t => radius * Math.sin(t));
+
+      Plotly.restyle('main-graph', {
+        x: [arcX],
+        y: [arcY],
+        'line.color': [color],
+        visible: true
+      }, [1]);
+    });
+
+    graphDiv.on('plotly_unhover', function () {
+      Plotly.restyle('main-graph', {
+        x: [[]],
+        y: [[]],
+        visible: false
+      }, [1]);
+    });
+
+    function loadImagesForProjection(projectionId) {
+      fetch(`./plots/${projectionId}_map.png`)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          document.getElementById('img-area-base').src = url;
+          document.getElementById('img-angu-base').src = url;
+        });
+    }
+
+    function loadAreaDistortForProjection(projectionId) {
+      fetch(`./plots/${projectionId}_area.png`)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          document.getElementById('img-area-overlay').src = url;
+        });
+    }
+
+    function loadAnguDistortForProjection(projectionId) {
+      fetch(`./plots/${projectionId}_angu.png`)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          document.getElementById('img-angu-overlay').src = url;
+        });
+    }
+
+    function updateQuarterCircle(radius, color) {
+      const numPoints = 100;
+      const theta = Array.from({ length: numPoints }, (_, i) => i * (Math.PI / 2) / (numPoints - 1));
+      const x = theta.map(t => radius * Math.cos(t));
+      const y = theta.map(t => radius * Math.sin(t));
+
+      Plotly.restyle('main-graph', {
+        x: [x],
+        y: [y],
+        'line.color': [color]
+      }, [0]);
+    }
+
+    const level1 = document.getElementById("level-1");
+    const level2 = document.getElementById("level-2");
+    const level3 = document.getElementById("level-3");
+
+    angu_pos = 0
+    area_pos = 0
+
+    constAreaList = {
+      "gott_eqa_scale": 3.2416762424870078,
+      "moll_brom": 1.00013182079928175,
+      "moll_brom_int": 1.00013184778793785,
+      "fouc_sinu_resc_0": 1.0001461075288555,
+      "fouc_sinu_resc_0.25": 1.10008277871254735,
+      "fouc_sinu_resc_0.5": 1.2222098696119456,
+      "fouc_sinu_resc_0.75": 1.37483736747141265,
+      "fouc_sinu_resc_1": 1.5710209012143679,
+      "wink1_90": 1.9996074200429338,
+    }
+
+    function updateImages(color) {
+      selectedId = level2.value
+
+      if (selectedId === "cea" || selectedId === "cyl_s" || selectedId === "eqc" || selectedId === "loxim" || selectedId === "wag3" || selectedId === "wink1" || selectedId === "bonne" || selectedId === "bottom") {
+        switch (level3.value.substring(0, 8)) {
+          case "φₜₛ = 0°":
+          case "φ₁ = 0°":
+            selectedId += "_0"
+            break
+          case "φₜₛ = 18":
+          case "φ₁ = 18°":
+            selectedId += "_18"
+            break
+          case "φₜₛ = 36":
+          case "φ₁ = 36°":
+            selectedId += "_36"
+            break
+          case "φₜₛ = 54":
+          case "φ₁ = 54°":
+            selectedId += "_54"
+            break
+          case "φₜₛ = 72":
+          case "φ₁ = 72°":
+            selectedId += "_72"
+            break
+          case "φₜₛ = 90":
+          case "φ₁ = 90°":
+            selectedId += "_90"
+            break
+        }
+      }
+
+      if (selectedId === "baar_sine") {
+        switch (level3.value) {
+          case "a = 0.4, φₜₛ = 0°":
+            selectedId += "_0.4_0"
+            break
+          case "a = 0.6, φₜₛ = 0°":
+            selectedId += "_0.6_0"
+            break
+          case "a = 0.8, φₜₛ = 0°":
+            selectedId += "_0.8_0"
+            break
+          case "a = 1.0, φₜₛ = 0°":
+            selectedId += "_1.0_0"
+            break
+          case "a = 0.4, φₜₛ = 18°":
+            selectedId += "_0.4_18"
+            break
+          case "a = 0.6, φₜₛ = 18°":
+            selectedId += "_0.6_18"
+            break
+          case "a = 0.8, φₜₛ = 18°":
+            selectedId += "_0.8_18"
+            break
+          case "a = 1.0, φₜₛ = 18°":
+            selectedId += "_1.0_18"
+            break
+        }
+      }
+
+      if (selectedId === "baranyi" || selectedId === "eck" || selectedId === "kav" || selectedId === "natearth" || selectedId === "miller" || selectedId === "tob" || selectedId === "urm" || selectedId === "franc" || selectedId === "gins" || selectedId === "stab_w" || selectedId === "v_grint") {
+        switch (level3.value) {
+          case "I":
+            selectedId += "1"
+            break
+          case "II":
+            selectedId += "2"
+            break
+          case "III":
+            selectedId += "3"
+            break
+          case "IV":
+            selectedId += "4"
+            break
+          case "V":
+            selectedId += "5"
+            break
+          case "VI":
+            selectedId += "6"
+            break
+          case "VII":
+            selectedId += "7"
+            break
+          case "VIII":
+            selectedId += "8"
+            break
+          case "IX":
+            selectedId += "9"
+            break
+          case "XIV":
+            selectedId += "14"
+            break
+        }
+      }
+
+      if (selectedId === "cabot") {
+        selectedId += ("_" + level3.value.substring(15))
+      }
+
+      if (selectedId === "fouc_sinu" || selectedId === "fouc_sinu_resc" || selectedId === "tob_g1" || selectedId === "urm_sinu" || selectedId === "hill_eucy") {
+        selectedId += ("_" + level3.value.substring(4))
+      }
+
+      if (selectedId === "gyorf") {
+        selectedId += ("_" + level3.value.toLowerCase())
+      }
+
+      if (selectedId === "hatano") {
+        switch (level3.value) {
+          case "Asymmetric":
+            selectedId += "_asym"
+            break
+          case "Symmetric":
+            selectedId += "_sym"
+            break
+        }
+      }
+
+      if (selectedId === "putp") {
+        switch (level3.value) {
+          case "P₁":
+            selectedId += "1"
+            break
+          case "P₂":
+            selectedId += "2"
+            break
+          case "P₃":
+            selectedId += "3"
+            break
+          case "P\'₃":
+            selectedId += "3p"
+            break
+          case "P\'₄":
+            selectedId += "4p"
+            break
+          case "P₅":
+            selectedId += "5"
+            break
+          case "P\'₅":
+            selectedId += "5p"
+            break
+          case "P₆":
+            selectedId += "6"
+            break
+          case "P\'₆":
+            selectedId += "6p"
+            break
+        }
+      }
+
+      if (selectedId === "sinucyli" || selectedId === "sinucyli_homo") {
+        switch (level3.value) {
+          case "α = 0.25, φₜₛ = 0°":
+            selectedId += "_0.25_0"
+            break
+          case "α = 0.25, φₜₛ = 36°":
+            selectedId += "_0.25_36"
+            break
+          case "α = 0.25, φₜₛ = 54°":
+            selectedId += "_0.25_54"
+            break
+          case "α = 0.25, φₜₛ = 72°":
+            selectedId += "_0.25_72"
+            break
+          case "α = 0.5, φₜₛ = 0°":
+            selectedId += "_0.5_0"
+            break
+          case "α = 0.5, φₜₛ = 36°":
+            selectedId += "_0.5_36"
+            break
+          case "α = 0.5, φₜₛ = 54°":
+            selectedId += "_0.5_54"
+            break
+          case "α = 0.5, φₜₛ = 72°":
+            selectedId += "_0.5_72"
+            break
+          case "α = 0.75, φₜₛ = 0°":
+            selectedId += "_0.75_0"
+            break
+          case "α = 0.75, φₜₛ = 36°":
+            selectedId += "_0.75_36"
+            break
+          case "α = 0.75, φₜₛ = 54°":
+            selectedId += "_0.75_54"
+            break
+          case "α = 0.75, φₜₛ = 72°":
+            selectedId += "_0.75_72"
+            break
+        }
+      }
+
+      if (selectedId === "snyd_me") {
+        switch (level3.value) {
+          case "Flat Pole":
+            selectedId += "_flat"
+            break
+          case "Pointed Pole":
+            selectedId += "_point"
+            break
+        }
+      }
+
+      if (selectedId === "lagrng") {
+        selectedId += ("_" + level3.value.substring(4))
+      }
+
+      if (selectedId === "raisz") {
+        switch (level3.value) {
+          case "Armadillo [tilt angle = 0°]":
+            selectedId += "_arm_0"
+            break
+          case "Half Ellipsoidal [tilt angle = 0°]":
+            selectedId += "_half_e_0"
+            break
+        }
+      }
+
+      if (selectedId === "canters_pscy" || selectedId === "canters_poco") {
+        selectedId = "canters" + level3.value.substring(1)
+      }
+
+      if (level1.value !== "Two-Hemisphere" && level3.value === "Two-Hemisphere") {
+        selectedId += "_2H"
+      }
+
+      if (level1.value === "Two-Hemisphere" && level3.value !== "Two-Hemisphere") {
+        selectedId = selectedId.substring(0, selectedId.length - 3)
+      }
+
+      if (level1.value !== "Interrupted" && level3.value === "Interrupted") {
+        selectedId += "_int"
+      }
+
+      if (level1.value === "Interrupted" && level3.value !== "Interrupted") {
+        selectedId = selectedId.substring(0, selectedId.length - 4)
+      }
+
+      const index = mplist.indexOf(selectedId);
+
+      const area_text = document.getElementById("area-text");
+      const angu_text = document.getElementById("angu-text");
+      const area_value = document.getElementById("area-value");
+      const angu_value = document.getElementById("angu-value");
+      const all_value = document.getElementById("all-value");
+
+      area = int_area[index]
+      angu = int_angular[index]
+
+      area_value.innerText = area.toFixed(5)
+      angu_value.innerText = angu.toFixed(5)
+      all_value.innerText = "\\( E = \\sqrt{E_{\\angle}^2+E_A^2} = {" + Math.sqrt(area ** 2 + angu ** 2).toFixed(5) + "} \\)"
+
+      if (window.MathJax) {
+        MathJax.typeset();
+      }
+
+      loadImagesForProjection(selectedId);
+
+      if (selectedId in constAreaList) {
+        area_text.innerHTML = `This projection has a local areal distortion factor ≈ ${constAreaList[selectedId].toFixed(5)} everywhere`
+        loadAreaDistortForProjection("blank");
+      }
+      else if (area > 0) {
+        area_text.innerText = "Local areal distortion factor (unitless; 1 indicates no areal distortion)"
+        loadAreaDistortForProjection(selectedId);
+      }
+      else {
+        area_text.innerHTML = "This is an <span style='color: red'>Equal-area projection</span> (local areal distortion factor ≡ 1 everywhere)"
+        loadAreaDistortForProjection("blank");
+      }
+
+      if (angu > 0) {
+        angu_text.innerText = "Local maximum angular deformation (degrees)"
+        loadAnguDistortForProjection(selectedId);
+      }
+      else {
+        angu_text.innerHTML = "This is a <span style='color: red'>Conformal projection</span> (local maximum angular deformation ≡ 0° everywhere)"
+        loadAnguDistortForProjection("blank");
+      }
+
+      angu_pos = angu
+      area_pos = area
+
+      Plotly.relayout('main-graph', {
+        'shapes[0].x0': angu_pos - radius,
+        'shapes[0].y0': area_pos - radius,
+        'shapes[0].x1': angu_pos + radius,
+        'shapes[0].y1': area_pos + radius,
+        'annotations[0].x': angu_pos + radius * 0.707,
+        'annotations[0].y': area_pos - radius * 0.707,
+        'annotations[0].text': projectionNameMap[selectedId],
+      });
+
+      updateQuarterCircle(Math.sqrt(angu_pos ** 2 + area_pos ** 2), color)
+
+    }
+
+    function populateLevel1() {
+      level1.innerHTML = "";
+      for (const category in projectionData) {
+        const opt = new Option(category, category);
+        level1.add(opt);
+      }
+      populateLevel2();
+    }
+
+    function populateLevel2() {
+      const category = level1.value;
+      const projections = projectionData[category] || {};
+      level2.innerHTML = "";
+      for (const proj in projections) {
+        fullname = projectionNameMap[proj]
+        const opt = new Option(fullname, proj);
+        level2.add(opt);
+      }
+      populateLevel3();
+    }
+
+    function populateLevel3() {
+      const category = level1.value;
+      const proj = level2.value;
+      const params = projectionData[category]?.[proj] || [];
+      level3.innerHTML = "";
+      if (params.length === 0) {
+        const opt = new Option("(no parameters)", "");
+        level3.add(opt);
+        level3.disabled = true;
+      } else {
+        level3.disabled = false;
+        for (const p of params) {
+          const opt = new Option(p, p);
+          level3.add(opt);
+        }
+      }
+      updateImages("orange");
+    }
+
+    level1.onchange = populateLevel2;
+    level2.onchange = populateLevel3;
+    level3.onchange = updateImages;
+
+    populateLevel1();
+  </script>
+</body>
+
+</html>
