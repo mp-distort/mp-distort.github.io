@@ -335,8 +335,11 @@
       "gyorf_e": "Györffy E",
       "gyorf_f": "Györffy F",
       "hatano": "Hatano",
+      "hatano_asym": "Hatano Asymmetric",
+      "hatano_sym": "Hatano Symmetric",
       "holzel": "Hölzel",
       "kav": "Kavraisky",
+      "kav5": "Kavraisky V",
       "kav7": "Kavraisky VII",
       "loxim": "Loximuthal",
       "loxim_0": "Loximuthal [φ₁ = 0°]",
@@ -489,9 +492,15 @@
 
       "aitoff": "Aitoff",
       "americ": "American Polyconic",
+      "wink3_class": "Winkel Tripel",
       "wink3": "Winkel Tripel",
       "wink3_barth": "Bartholomew (Winkel Tripel with Bartholomew scaling)",
+      "wink3_oxford": "Oxford Atlas - Polyconic (Winkel Tripel with Oxford Atlas scaling)",
+
+      "hammer_class": "Hammer",
+      "hammer": "Hammer",
       "briesem": "Briesemeister (Hammer with Briesemeister scaling)",
+
       "canters_poco": "Canters Polyconic",
       "eck_greif": "Eckert–Greifendorff",
       "fournier1": "Fournier I Globular",
@@ -499,9 +508,7 @@
       "franc5": "Frančula V",
       "franc14": "Frančula XIV",
 
-      "hammer": "Hammer",
       "hill_eucy": "Hill Eucyclic",
-
       "hill_eucy_0": "Hill Eucyclic [K = 0]",
       "hill_eucy_0.25": "Hill Eucyclic [K = 0.25]",
       "hill_eucy_0.75": "Hill Eucyclic [K = 0.75]",
@@ -509,7 +516,6 @@
       "hill_eucy_6": "Hill Eucyclic [K = 6]",
 
       "maurer160": "Maurer SNo. 160 Apparent Globular",
-      "wink3_oxford": "Oxford Atlas - Polyconic (Winkel Tripel with Oxford Atlas scaling)",
       "stab_w": "Stabius-Werner",
       "stab_w1": "Stabius-Werner I",
       "stab_w3": "Stabius-Werner III",
@@ -533,6 +539,58 @@
       "raisz_half_e_0": "Raisz Half Ellipsoidal",
 
     };
+
+    postfixed = { ...projectionNameMap, b: { ...projectionNameMap.b } }
+    postfixed.baker_int = "Baker Dinomic [int.]"
+    postfixed.baker = "Baker Dinomic [unint.]"
+    postfixed.boggs_int = "Boggs Eumorphic [int.]"
+    postfixed.boggs = "Boggs Eumorphic [unint.]"
+    postfixed.goode_int = "Goode Homolosine [int.]"
+    postfixed.goode = "Goode Homolosine [unint.]"
+    postfixed.mcb_p3_int = "McBryde P3 [int.]"
+    postfixed.mcb_p3 = "McBryde P3 [unint.]"
+    postfixed.mcb_q3_int = "McBryde Q3 [int.]"
+    postfixed.mcb_q3 = "McBryde Q3 [unint.]"
+    postfixed.mcb_s2_int = "McBryde S2 [int.]"
+    postfixed.mcb_s2 = "McBryde S2 [unint.]"
+    postfixed.mcb_s3_int = "McBryde S3 [int.]"
+    postfixed.mcb_s3 = "McBryde S3 [unint.]"
+    postfixed.mcbt_fpp_int = "McBryde–Thomas Flat-Polar Parabolic [int.]"
+    postfixed.mcbt_fpp = "McBryde–Thomas Flat-Polar Parabolic [unint.]"
+    postfixed.mcbt_fpq_int = "McBryde–Thomas Flat-Polar Quartic [int.]"
+    postfixed.mcbt_fpq = "McBryde–Thomas Flat-Polar Quartic [unint.]"
+    postfixed.mcbt_fps_int = "McBryde–Thomas Flat-Polar Sinusoidal [int.]"
+    postfixed.mcbt_fps = "McBryde–Thomas Flat-Polar Sinusoidal [unint.]"
+    postfixed.moll_int = "Mollweide [int.]"
+    postfixed.moll = "Mollweide [unint.]"
+    postfixed.moll_brom_int = "Bromley (Mollweide with Bromley scaling) [int.]"
+    postfixed.moll_brom = "Bromley (Mollweide with Bromley scaling) [unint.]"
+    postfixed.qua_aut_int = "Quartic-authalic [int.]"
+    postfixed.qua_aut = "Quartic-authalic [unint.]"
+    postfixed.siemon4_int = "Siemon IV [int.]"
+    postfixed.siemon4 = "Siemon IV [unint.]"
+    postfixed.sinus_int = "Sinusoidal [int.]"
+    postfixed.sinus = "Sinusoidal [unint.]"
+
+    postfixed.aeqd_2H = "Azimuthal Equidistant [Two-Hemi.]"
+    postfixed.aeqd = "Azimuthal Equidistant [Global]"
+    postfixed.airy_2H = "Airy [Two-Hemi.]"
+    postfixed.apian2_2H = "Apian II [Two-Hemi.]"
+    postfixed.apian2 = "Apian II [Global]"
+    postfixed.bacon_2H = "Bacon [Two-Hemi.]"
+    postfixed.bacon = "Bacon [Global]"
+    postfixed.breus_g_2H = "Breusing Geometric [Two-Hemi.]"
+    postfixed.breus_h_2H = "Breusing Harmonic [Two-Hemi.]"
+    postfixed.fournier1_2H = "Fournier I [Two-Hemi.]"
+    postfixed.fournier1 = "Fournier I [Global]"
+    postfixed.gins1_2H = "Ginzburg I [Two-Hemi.]"
+    postfixed.gins2_2H = "Ginzburg II [Two-Hemi.]"
+    postfixed.gott_mug_2H = "Gott–Mugnolo Azimuthal [Two-Hemi.]"
+    postfixed.gott_mug = "Gott–Mugnolo Azimuthal [Global]"
+    postfixed.laea_2H = "Lambert Azimuthal Equal-area [Two-Hemi.]"
+    postfixed.laea = "Lambert Azimuthal Equal-area [Global]"
+    postfixed.nicol_2H = "Nicolosi Globular [Two-Hemi.]"
+    postfixed.stereo_2H = "Stereographic [Two-Hemi.]"
 
     function plotlines(x, y, pointNames, marker, markerfacecolor, color, markeredgewidth, legendname, legendnameshort) {
 
@@ -571,7 +629,7 @@
         }
       }
 
-      const processedText = pointNames.map(name => projectionNameMap[name] || name);
+      const processedText = pointNames.map(name => postfixed[name] || name);
 
       const customData = x.map((xVal, i) => {
         const yVal = y[i];
@@ -3233,7 +3291,6 @@
     const poconclass1 = [
       "aitoff",
       "americ",
-      "wink3_barth",
       "briesem",
       "canters07",
       "canters12",
@@ -3259,6 +3316,8 @@
       "hill_eucy_2",
       "hill_eucy_6",
       "maurer160",
+      "wink3",
+      "wink3_barth",
       "wink3_oxford",
       "stab_w1",
       "stab_w3",
@@ -3708,7 +3767,7 @@
       "Two-Hemisphere": {
         "aeqd_2H": ["Two-Hemisphere", "Global"],
         "laea_2H": ["Two-Hemisphere", "Global"],
-        "airy_2H": ["Two-Hemisphere", "Global"],
+        "airy_2H": ["Two-Hemisphere"],
         "apian2_2H": ["Two-Hemisphere", "Global"],
         "bacon_2H": ["Two-Hemisphere", "Global"],
         "breus_g_2H": ["Two-Hemisphere"],
@@ -3817,13 +3876,13 @@
         "franc": ["V", "XIV"],
         "gins": ["IV", "V", "VI", "IX"],
         "gyorf": ["D", "E", "F"],
-        "hammer": ["Default with no scaling", "Apply Briesemeister scaling."],
+        "hammer_class": ["Default with no scaling", "Apply Briesemeister scaling"],
         "hill_eucy": ["K = 0", "K = 0.25", "K = 0.75", "K = 2", "K = 6"],
         "maurer160": [],
         "stab_w": ["I", "III"],
         "strebe_eqa": [],
         "v_grint": ["IV"],
-        "wink3": ["Default with no scaling", "Apply Bartholomew scaling", "Apply Oxford Atlas scaling"],
+        "wink3_class": ["Default with no scaling", "Apply Bartholomew scaling", "Apply Oxford Atlas scaling"],
       },
       Miscellaneous: {
         "adams_w1": [],
@@ -3959,6 +4018,15 @@
         return ["Pseudo-cylindrical", target.substring(0, 5), "φₜₛ = " + target.slice(-2).replace(/^_+/, '') + "°"];
       }
 
+      if (target.startsWith("hammer") || target.startsWith("briesem")) {
+        return ["Polyconic", "hammer_class", target.endsWith("hammer") ? "Default with no scaling" : "Apply Briesemeister scaling"];
+      }
+
+
+      if (target.startsWith("wink3")) {
+        return ["Polyconic", target.substring(0, 5) + "_class", target.endsWith("barth") ? "Apply Bartholomew scaling" : target.endsWith("oxford") ? "Apply Oxford Atlas scaling" : "Default with no scaling"];
+      }
+
       if (target.startsWith("fouc_sinu_resc")) {
         return ["Pseudo-cylindrical", target.substring(0, 14), "α = " + target.slice(-4).replace(/^[_sc]+/, '')];
       }
@@ -4025,6 +4093,9 @@
       return null;
     }
 
+    notclicked = true
+    radiusInDataCoords = 0.03
+
     Plotly.newPlot('main-graph', traces, layout, {
       modeBarButtonsToRemove: [
         'select2d',
@@ -4047,7 +4118,7 @@
           const bbox = graphDiv.getBoundingClientRect();
           const xPixelsPerUnit = bbox.width / (xRange[1] - xRange[0]);
 
-          const radiusInDataCoords = radiusInPixels / xPixelsPerUnit;
+          radiusInDataCoords = radiusInPixels / xPixelsPerUnit;
 
           Plotly.relayout('main-graph', {
             'shapes[0].x0': angu_pos - radiusInDataCoords,
@@ -4064,6 +4135,8 @@
       setTimeout(() => {
         if (!graphDiv._plotlyClickBound) {
           graphDiv.on('plotly_click', function (data) {
+            notclicked = false
+
             if (data.points[0].data.name === "") {
               return
             }
@@ -4094,6 +4167,9 @@
               }
 
               updateImages(color);
+
+              notclicked = true
+
             }
 
           });
@@ -4388,6 +4464,31 @@
         }
       }
 
+      if (selectedId === "hammer_class") {
+        switch (level3.value) {
+          case "Default with no scaling":
+            selectedId = "hammer"
+            break
+          case "Apply Briesemeister scaling":
+            selectedId = "briesem"
+            break
+        }
+      }
+
+      if (selectedId === "wink3_class") {
+        switch (level3.value) {
+          case "Default with no scaling":
+            selectedId = "wink3"
+            break
+          case "Apply Bartholomew scaling":
+            selectedId = "wink3_barth"
+            break
+          case "Apply Oxford Atlas scaling":
+            selectedId = "wink3_oxford"
+            break
+        }
+      }
+
       if (selectedId === "snyd_me") {
         switch (level3.value) {
           case "Flat Pole":
@@ -4481,18 +4582,28 @@
       area_pos = area
 
       Plotly.relayout('main-graph', {
-        'shapes[0].x0': angu_pos - radius,
-        'shapes[0].y0': area_pos - radius,
-        'shapes[0].x1': angu_pos + radius,
-        'shapes[0].y1': area_pos + radius,
-        'annotations[0].x': angu_pos + radius * 0.707,
-        'annotations[0].y': area_pos - radius * 0.707,
-        'annotations[0].text': projectionNameMap[selectedId],
+        'shapes[0].x0': angu_pos - radiusInDataCoords,
+        'shapes[0].y0': area_pos - radiusInDataCoords,
+        'shapes[0].x1': angu_pos + radiusInDataCoords,
+        'shapes[0].y1': area_pos + radiusInDataCoords,
+        'annotations[0].x': angu_pos + radiusInDataCoords * 0.707,
+        'annotations[0].y': area_pos - radiusInDataCoords * 0.707,
+        'annotations[0].text': postfixed[selectedId],
       });
 
       updateQuarterCircle(Math.sqrt(angu_pos ** 2 + area_pos ** 2), color)
 
     }
+
+    function debounce(fn, delay) {
+      let timer;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
+    const debouncedUpdateImages = debounce(updateImages, 100);
 
     function populateLevel1() {
       level1.innerHTML = "";
@@ -4531,12 +4642,14 @@
           level3.add(opt);
         }
       }
-      updateImages("orange");
+      if (notclicked) {
+        debouncedUpdateImages("orange");
+      }
     }
 
     level1.onchange = populateLevel2;
     level2.onchange = populateLevel3;
-    level3.onchange = updateImages;
+    level3.onchange = () => debouncedUpdateImages("orange");
 
     populateLevel1();
   </script>
