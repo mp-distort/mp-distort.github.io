@@ -4003,7 +4003,7 @@
       }
 
       if (target.startsWith("cea") || target.startsWith("eqc")) {
-        return ["Cylindrical", target.substring(0, 3), "φₜₛ = " + target.slice(-2).replace(/^_+/, '') + "°"];
+        return ["Cylindrical", target.substring(0, 3), "φₜₛ = " + target.slice(-2).replace(/^_+/, '') + "°" + (target.startsWith("eqc") && target.slice(-2) === "_0" ? " (Plate Carrée)" : "")];
       }
 
       if (target.startsWith("cyl_s")) {
@@ -4185,23 +4185,25 @@
         return
       }
 
-      const cx = data.points[0].x;
-      const cy = data.points[0].y;
-      const color = data.points[0].fullData.marker.color;
+      setTimeout(() => {
+        const cx = data.points[0].x;
+        const cy = data.points[0].y;
+        const color = data.points[0].fullData.marker.color;
 
-      const radius = Math.sqrt(cx ** 2 + cy ** 2)
+        const radius = Math.sqrt(cx ** 2 + cy ** 2)
 
-      const numPoints = 100;
-      const theta = Array.from({ length: numPoints }, (_, i) => i * Math.PI / 2 / (numPoints - 1));
-      const arcX = theta.map(t => radius * Math.cos(t));
-      const arcY = theta.map(t => radius * Math.sin(t));
+        const numPoints = 100;
+        const theta = Array.from({ length: numPoints }, (_, i) => i * Math.PI / 2 / (numPoints - 1));
+        const arcX = theta.map(t => radius * Math.cos(t));
+        const arcY = theta.map(t => radius * Math.sin(t));
 
-      Plotly.restyle('main-graph', {
-        x: [arcX],
-        y: [arcY],
-        'line.color': [color],
-        visible: true
-      }, [1]);
+        Plotly.restyle('main-graph', {
+          x: [arcX],
+          y: [arcY],
+          'line.color': [color],
+          visible: true
+        }, [1]);
+      }, 100)
     });
 
     graphDiv.on('plotly_unhover', function () {
