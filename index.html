@@ -1021,7 +1021,7 @@
       0,
       0,
       0,
-      0.000250759,
+      0,
       0.047691768,
       0.100327138,
       0.159162844,
@@ -1089,7 +1089,7 @@
       0.393120504,
       0.345971193,
       0,
-      0.001713547,
+      0,
       0.121185078,
       0.102995665,
       0,
@@ -1191,7 +1191,7 @@
       0,
       0,
       0,
-      0.001639074,
+      0,
       0,
       0,
       0,
@@ -2307,7 +2307,7 @@
     ]
 
     fouc_resc2 = [
-      0.000250759,
+      0,
       0.047691768,
       0.100327138,
       0.159162844,
@@ -3232,7 +3232,7 @@
       0,
       0,
       0,
-      0.001639074,
+      0,
       0,
       0,
       0,
@@ -3492,45 +3492,45 @@
       ...miscclass
     ]);
 
-    filtered_push(null, excludedElements, traces, "o", 'none', "pink", 0.5, "Pseudo-cylindrical projections", "Pseudo-cylindrical")
+    filtered_push(null, excludedElements, traces, "o", 'none', "pink", 0.5, "Pseudo-cylindrical projections", "Pseudo-cylind.")
     filtered_push(new Set(poconclass1), null, traces, "d", 'none', "dodgerblue", 0.5, "Polyconic projections", "Polyconic")
-    filtered_push(new Set(miscclass), null, traces, "x", 'none', "limegreen", 0.5, "Miscellaneous projections", "Miscellaneous")
+    filtered_push(new Set(miscclass), null, traces, "x", 'none', "forestgreen", 0.5, "Miscellaneous projections", "Misc.")
 
     traces.push(plotlines([10, 20], [10, 20], ["", ""], "+-", 'none', "white", 0.5, "&nbsp;", ""))
 
-    traces.push(plotlines(cyl3, cyl2, cyl1, "s-", 'none', "saddlebrown", 0.5, "Cylindrical Stereographic", ""))
-    traces.push(plotlines(cylall3, cylall2, Array.from({ length: 91 }, (_, y) => `Cylindrical Stereographic [φₜₛ = ${y}°]`), "--", 'none', "saddlebrown", 0.5, "", ""))
+    traces.push(plotlines(cyl3, cyl2, cyl1, "s-", 'none', "saddlebrown", 0.5, "Cylindrical Stereographic", "Cylind."))
+    traces.push(plotlines(cylall3, cylall2, Array.from({ length: 91 }, (_, y) => `Cylindrical Stereographic [φₜₛ = ${y}°]`), "--", 'none', "saddlebrown", 0.5, "", "Cylind."))
 
-    traces.push(plotlines(eqc3, eqc2, eqc1, "s-", 'none', "peru", 0.5, "Equirectangular", ""))
-    traces.push(plotlines(eqcall3, eqcall2, Array.from({ length: 91 }, (_, y) => `Equirectangular [φₜₛ = ${y}°]`), "--", 'none', "peru", 0.5, "", ""))
+    traces.push(plotlines(eqc3, eqc2, eqc1, "s-", 'none', "peru", 0.5, "Equirectangular", "Cylind."))
+    traces.push(plotlines(eqcall3, eqcall2, Array.from({ length: 91 }, (_, y) => `Equirectangular [φₜₛ = ${y}°]`), "--", 'none', "peru", 0.5, "", "Cylind."))
 
-    traces.push(plotlines(cabot3, cabot2, cabot1, "+-", 'none', "magenta", 0.5, "Cabot", ""))
-    traces.push(plotlines(cabotall3, cabotall2, Array.from({ length: 201 }, (_, i) => `Cabot [aspect ratio = ${(0.5 + i * 0.01).toFixed(2)}]`), "--", 'none', "magenta", 0.5, "", ""))
+    traces.push(plotlines(cabot3, cabot2, cabot1, "+-", 'none', "magenta", 0.5, "Cabot", "Pseudo-cylind."))
+    traces.push(plotlines(cabotall3, cabotall2, Array.from({ length: 201 }, (_, i) => `Cabot [aspect ratio = ${(0.5 + i * 0.01).toFixed(2)}]`), "--", 'none', "magenta", 0.5, "", "Pseudo-cylind."))
 
-    traces.push(plotlines(fouc_resc3, fouc_resc2, fouc_resc1, "+-", 'none', "lightpink", 0.5, "Foucaut sinusoidal [Rescaled]", ""))
-    traces.push(plotlines(fouc_resc_all3, fouc_resc_all2, Array.from({ length: 101 }, (_, i) => `Foucaut sinusoidal [α = ${(i * 0.01).toFixed(2)}, Rescaled]`), "--", 'none', "lightpink", 0.5, "", ""))
+    traces.push(plotlines(fouc_resc3, fouc_resc2, fouc_resc1, "+-", 'none', "lightpink", 0.5, "Foucaut sinusoidal [Rescaled]", "Pseudo-cylind."))
+    traces.push(plotlines(fouc_resc_all3, fouc_resc_all2, Array.from({ length: 101 }, (_, i) => `Foucaut sinusoidal [α = ${(i * 0.01).toFixed(2)}, Rescaled]`), "--", 'none', "lightpink", 0.5, "", "Pseudo-cylind."))
 
-    traces.push(plotlines(wag33, wag32, wag31, "+-", 'none', "deeppink", 0.5, "Wagner III", ""))
-    traces.push(plotlines(wag3all3, wag3all2, Array.from({ length: 91 }, (_, y) => `Wagner III [φₜₛ = ${y}°]`), "--", 'none', "deeppink", 0.5, "", ""))
+    traces.push(plotlines(wag33, wag32, wag31, "+-", 'none', "deeppink", 0.5, "Wagner III", "Pseudo-cylind."))
+    traces.push(plotlines(wag3all3, wag3all2, Array.from({ length: 91 }, (_, y) => `Wagner III [φₜₛ = ${y}°]`), "--", 'none', "deeppink", 0.5, "", "Pseudo-cylind."))
 
-    traces.push(plotlines(wink13, wink12, wink11, "+-", 'none', "lightcoral", 0.5, "Winkel I", ""))
-    traces.push(plotlines(wink11all3, wink11all2, Array.from({ length: 91 }, (_, y) => `Winkel I [φₜₛ = ${y}°]`), "--", 'none', "lightcoral", 0.5, "", ""))
+    traces.push(plotlines(wink13, wink12, wink11, "+-", 'none', "lightcoral", 0.5, "Winkel I", "Pseudo-cylind."))
+    traces.push(plotlines(wink11all3, wink11all2, Array.from({ length: 91 }, (_, y) => `Winkel I [φₜₛ = ${y}°]`), "--", 'none', "lightcoral", 0.5, "", "Pseudo-cylind."))
 
-    traces.push(plotlines(loxim3, loxim2, loxim1, "+-", 'none', "orange", 0.5, "Loximuthal", ""))
-    traces.push(plotlines(loximall3, loximall2, Array.from({ length: 91 }, (_, y) => `Loximuthal [φ₁ = ${y}°]`), "-", 'none', "orange", 0.5, "", ""))
+    traces.push(plotlines(loxim3, loxim2, loxim1, "+-", 'none', "orange", 0.5, "Loximuthal", "Pseudo-cylind."))
+    traces.push(plotlines(loximall3, loximall2, Array.from({ length: 91 }, (_, y) => `Loximuthal [φ₁ = ${y}°]`), "-", 'none', "orange", 0.5, "", "Pseudo-cylind."))
 
-    traces.push(plotlines(lagrng3, lagrng2, lagrng1, "x-", 'none', "orange", 0.5, "Lambert–Lagrange", ""))
+    traces.push(plotlines(lagrng3, lagrng2, lagrng1, "x-", 'none', "lime", 0.5, "Lambert–Lagrange", "Misc."))
 
-    const x0 = 0.5;
-    const y0 = 0.5;
+    const x0 = 2.5;
+    const y0 = 2.5;
     const radius = 0.02;
     const arrowLen = 0.07;
 
     const layout = {
       annotations: [
         {
-          x: 0.5,
-          y: 0.5,
+          x: 2.5,
+          y: 2.5,
           xref: 'x',
           yref: 'y',
           text: "tbd.",
@@ -3538,6 +3538,7 @@
           arrowhead: 2,
           ax: 50,
           ay: 30,
+          arrowcolor: 'rgba(255, 0, 0, 0.6)',
           font: {
             color: 'black',
             size: 16
@@ -3556,6 +3557,7 @@
           arrowhead: 2,
           ax: 40,
           ay: 20,
+          arrowcolor: 'magenta',
           font: {
             color: 'black',
             size: 14
@@ -3575,6 +3577,7 @@
           arrowhead: 2,
           ax: 150,
           ay: -30,
+          arrowcolor: 'lightpink',
           font: {
             color: 'black',
             size: 14
@@ -3594,6 +3597,7 @@
           arrowhead: 2,
           ax: 50,
           ay: 20,
+          arrowcolor: 'lightcoral',
           font: {
             color: 'black',
             size: 14
@@ -3613,6 +3617,7 @@
           arrowhead: 2,
           ax: 40,
           ay: 30,
+          arrowcolor: 'orange',
           font: {
             color: 'black',
             size: 14
@@ -3632,6 +3637,7 @@
           arrowhead: 2,
           ax: 40,
           ay: 30,
+          arrowcolor: 'deeppink',
           font: {
             color: 'black',
             size: 14
@@ -3651,6 +3657,7 @@
           arrowhead: 2,
           ax: -50,
           ay: -30,
+          arrowcolor: 'peru',
           font: {
             color: 'black',
             size: 14
@@ -3670,6 +3677,7 @@
           arrowhead: 2,
           ax: -100,
           ay: -20,
+          arrowcolor: 'saddlebrown',
           font: {
             color: 'black',
             size: 14
@@ -3689,11 +3697,12 @@
           arrowhead: 2,
           ax: 90,
           ay: -30,
+          arrowcolor: 'lime',
           font: {
             color: 'black',
             size: 14
           },
-          bgcolor: 'orange',
+          bgcolor: 'lime',
           opacity: 0.6,
           bordercolor: 'black',
           borderwidth: 1
@@ -3809,8 +3818,8 @@
         "eqearth": [],
         "erdi": [],
         "fahey": [],
-        "fouc_sinu": ["α = 0", "α = 0.25", "α = 0.5", "α = 0.75", "α = 1"],
-        "fouc_sinu_resc": ["α = 0", "α = 0.25", "α = 0.5", "α = 0.75", "α = 1"],
+        "fouc_sinu": ["α = 0 (≡Sinusoidal)", "α = 0.25", "α = 0.5", "α = 0.75", "α = 1 (≡CEA, φₜₛ = 0°)"],
+        "fouc_sinu_resc": ["α = 0 (≡Sinusoidal)", "α = 0.25", "α = 0.5", "α = 0.75", "α = 1"],
         "fouc_stereo": [],
         "fournier2": [],
         "gall_bomf": [],
@@ -3846,8 +3855,8 @@
         "sinus": ["Uninterrupted", "Interrupted"],
         "snyd_me": ["Flat Pole", "Pointed Pole"],
         "times": [],
-        "tob_g1": ["α = 0.25", "α = 0.5", "α = 0.75"],
-        "urm_sinu": ["b = 0", "b = 0.25", "b = 0.5", "b = 0.75", "b = 1"],
+        "tob_g1": ["α = 0 (≡Sinusoidal)", "α = 0.25", "α = 0.5", "α = 0.75", "α = 1 (≡CEA, φₜₛ = 0°)"],
+        "urm_sinu": ["b = 0 (≡CEA, φₜₛ = 28°)", "b = 0.25", "b = 0.5", "b = 0.75", "b = 1"],
         "wag1": [],
         "wag2": [],
         "wag3": ["φₜₛ = 0°", "φₜₛ = 36°", "φₜₛ = 54°", "φₜₛ = 72°"],
@@ -3864,8 +3873,8 @@
         "laea": ["Global", "Two-Hemisphere"],
       },
       "Pseudo-conic": {
-        "bonne": ["φ₁ = 0°", "φ₁ = 18°", "φ₁ = 36°", "φ₁ = 54°", "φ₁ = 90°"],
-        "bottom": ["φ₁ = 0°", "φ₁ = 36°", "φ₁ = 54°", "φ₁ = 90°"],
+        "bonne": ["φ₁ = 0° (≡Sinusoidal)", "φ₁ = 18°", "φ₁ = 36°", "φ₁ = 54°", "φ₁ = 90° (≡Bottomley, φ₁ = 90°)"],
+        "bottom": ["φ₁ = 0° (≡Sinusoidal)", "φ₁ = 36°", "φ₁ = 54°", "φ₁ = 90° (≡Bonne, φ₁ = 90°)"],
       },
       Polyconic: {
         "aitoff": [],
@@ -3966,6 +3975,26 @@
         }
       }
 
+      if (target.startsWith("hill_eucy")) {
+        return ["Polyconic", target.substring(0, 9), "K = " + target.substring(10, 14)];
+      }
+
+      if (target.startsWith("bonne")) {
+        return ["Pseudo-conic", target.substring(0, 5), "φ₁ = " + target.substring(6, 8) + "°" + (target.substring(6, 8) === "0" ? " (≡Sinusoidal)" : (target.substring(6, 8) === "90" ? " (≡Bottomley, φ₁ = 90°)" : ""))];
+      }
+
+      if (target.startsWith("bottom")) {
+        return ["Pseudo-conic", target.substring(0, 6), "φ₁ = " + target.substring(7, 9) + "°" + (target.substring(7, 9) === "0" ? " (≡Sinusoidal)" : (target.substring(7, 9) === "90" ? " (≡Bonne, φ₁ = 90°)" : ""))];
+      }
+
+      if (target.startsWith("tob_g1")) {
+        return ["Pseudo-cylindrical", target.substring(0, 6), "α = " + target.substring(7, 11) + (target.substring(7, 11) === "1" ? " (≡CEA, φₜₛ = 0°)" : (target.substring(7, 11) === "0" ? "≡Sinusoidal" : ""))];
+      }
+
+      if (target.startsWith("urm_sinu")) {
+        return ["Pseudo-cylindrical", target.substring(0, 8), "b = " + target.substring(9, 13) + (target.substring(9, 13) === "0" ? " (≡CEA, φₜₛ = 28°)" : "")];
+      }
+
       if (target.startsWith("tob") || target.startsWith("urm")) {
         return ["Cylindrical", target.substring(0, 3), toRoman[target.slice(-1)]];
       }
@@ -3983,11 +4012,15 @@
       }
 
       if (target.startsWith("franc")) {
-        return ["Polyconic", target.substring(0, 5), toRoman[target.slice(-1)]];
+        return ["Polyconic", target.substring(0, 5), toRoman[target.substring(5, 7)]];
       }
 
-      if (target.startsWith("miller") || target.startsWith("stab_w")) {
+      if (target.startsWith("miller")) {
         return ["Cylindrical", target.substring(0, 6), toRoman[target.slice(-1)]];
+      }
+
+      if (target.startsWith("stab_w")) {
+        return ["Polyconic", target.substring(0, 6), toRoman[target.slice(-1)]];
       }
 
       if (target.startsWith("baranyi")) {
@@ -4028,7 +4061,11 @@
       }
 
       if (target.startsWith("fouc_sinu_resc")) {
-        return ["Pseudo-cylindrical", target.substring(0, 14), "α = " + target.slice(-4).replace(/^[_sc]+/, '')];
+        return ["Pseudo-cylindrical", target.substring(0, 14), "α = " + target.substring(15, 19) + (target.substring(15, 19) === "0" ? " (≡Sinusoidal)" : "")];
+      }
+
+      if (target.startsWith("fouc_sinu")) {
+        return ["Pseudo-cylindrical", target.substring(0, 9), "α = " + target.substring(10, 14) + (target.substring(10, 14) === "1" ? " (≡CEA, φₜₛ = 0°)" : (target.substring(7, 11) === "0" ? " (≡Sinusoidal)" : ""))];
       }
 
       if (target.startsWith("loxim")) {
@@ -4083,11 +4120,11 @@
       }
 
       if (target.startsWith("sinucyli_homo")) {
-        return ["Pseudo-cylindrical", target.substring(0, 13), "α = " + target.slice(-7, -3).replace(/^_+/, '') + ", φₜₛ = " + target.slice(-3).replace(/^_+/, '') + "°"];
+        return ["Pseudo-cylindrical", target.substring(0, 13), "α = " + target.slice(-7, -2).replace(/^[_o]+|_+$/g, '') + ", φₜₛ = " + target.slice(-2).replace(/^_+/, '') + "°"];
       }
 
       if (target.startsWith("sinucyli")) {
-        return ["Pseudo-cylindrical", target.substring(0, 8), "α = " + target.slice(-7, -3).replace(/^_+/, '') + ", φₜₛ = " + target.slice(-3).replace(/^_+/, '') + "°"];
+        return ["Pseudo-cylindrical", target.substring(0, 8), "α = " + target.slice(-7, -2).replace(/^[_o]+|_+$/g, '') + ", φₜₛ = " + target.slice(-2).replace(/^_+/, '') + "°"];
       }
 
       return null;
@@ -4144,7 +4181,6 @@
             const point = data.points[0];
             const x = point.x;
             const y = point.y;
-            const color = data.points[0].fullData.marker.color;
 
             const text = point.text;
             const customdata = point.customdata[1];
@@ -4166,7 +4202,7 @@
                 document.getElementById('level-3').value = level3;
               }
 
-              updateImages(color);
+              updateImages();
 
               notclicked = true
 
@@ -4264,9 +4300,6 @@
 
     constAreaList = {
       "gott_eqa_scale": 3.2416762424870078,
-      "moll_brom": 1.00013182079928175,
-      "moll_brom_int": 1.00013184778793785,
-      "fouc_sinu_resc_0": 1.0001461075288555,
       "fouc_sinu_resc_0.25": 1.10008277871254735,
       "fouc_sinu_resc_0.5": 1.2222098696119456,
       "fouc_sinu_resc_0.75": 1.37483736747141265,
@@ -4274,13 +4307,23 @@
       "wink1_90": 1.9996074200429338,
     }
 
-    function updateImages(color) {
+    function getColorFromTraces(name) {
+      for (const trace of traces) {
+        if (trace.text && trace.text.includes(name)) {
+          return trace.marker.color;
+        }
+      }
+      return null;
+    }
+
+    function updateImages() {
       selectedId = level2.value
 
       if (selectedId === "cea" || selectedId === "cyl_s" || selectedId === "eqc" || selectedId === "loxim" || selectedId === "wag3" || selectedId === "wink1" || selectedId === "bonne" || selectedId === "bottom") {
         switch (level3.value.substring(0, 8)) {
           case "φₜₛ = 0°":
           case "φ₁ = 0°":
+          case "φ₁ = 0° ":
             selectedId += "_0"
             break
           case "φₜₛ = 18":
@@ -4375,7 +4418,7 @@
       }
 
       if (selectedId === "fouc_sinu" || selectedId === "fouc_sinu_resc" || selectedId === "tob_g1" || selectedId === "urm_sinu" || selectedId === "hill_eucy") {
-        selectedId += ("_" + level3.value.substring(4))
+        selectedId += ("_" + level3.value.substring(4, 8).replace(/[ (≡]+$/, ''))
       }
 
       if (selectedId === "gyorf") {
@@ -4545,6 +4588,8 @@
       const angu_value = document.getElementById("angu-value");
       const all_value = document.getElementById("all-value");
 
+      color = getColorFromTraces(postfixed[selectedId] || selectedId);
+
       area = int_area[index]
       angu = int_angular[index]
 
@@ -4645,13 +4690,13 @@
         }
       }
       if (notclicked) {
-        debouncedUpdateImages("orange");
+        debouncedUpdateImages();
       }
     }
 
     level1.onchange = populateLevel2;
     level2.onchange = populateLevel3;
-    level3.onchange = () => debouncedUpdateImages("orange");
+    level3.onchange = () => debouncedUpdateImages();
 
     populateLevel1();
   </script>
